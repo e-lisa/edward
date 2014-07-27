@@ -35,12 +35,18 @@ import re
 import io
 import time
 
+
 def main ():
 
     handle_args()
 
-    txt = sys.stdin.read()
-    msg = email.parser.Parser().parsestr(txt)
+    email_text = sys.stdin.read()
+    print(decode_email(email_text))
+
+
+def decode_email (text):
+
+    msg = email.parser.Parser().parsestr(text)
 
     message  = ""
     message += "From: " + msg['From'] + "\n"
@@ -48,7 +54,7 @@ def main ():
 
     message += msg_walk(msg)
 
-    print(message)
+    return message
 
 
 def msg_walk (msg):
@@ -73,8 +79,7 @@ def msg_walk (msg):
 
 
         if (filename == "encrypted.asc") or (conttype == "pgp/mime"):
-            payload_dec = decrypt_payload(payload)
-            body += payload_dec
+            body += decrypt_payload(payload)
 
         elif conttype == "text/plain":
             body += payload + "\n"
@@ -83,6 +88,7 @@ def msg_walk (msg):
             body += payload + "\n"
 
     return body
+
 
 def get_part_info (part):
 
