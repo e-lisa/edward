@@ -1,0 +1,182 @@
+#! /usr/bin/env python3
+
+"""*********************************************************************
+* Edward is free software: you can redistribute it and/or modify       *
+* it under the terms of the GNU Affero Public License as published by  *
+* the Free Software Foundation, either version 3 of the License, or    *
+* (at your option) any later version.                                  *
+*                                                                      *
+* Edward is distributed in the hope that it will be useful,            *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of       *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        *
+* GNU Affero Public License for more details.                          *
+*                                                                      *
+* You should have received a copy of the GNU Affero Public License     *
+* along with Edward.  If not, see <http://www.gnu.org/licenses/>.      *
+*                                                                      *
+* Copyright (C) 2014-2015 Andrew Engelbrecht                (AGPLv3+)  *
+* Copyright (C) 2014      Josh Drake                        (AGPLv3+)  *
+* Copyright (C) 2014      Lisa Marie Maginnis               (AGPLv3+)  *
+*                                                                      *
+* Special thanks to Josh Drake for writing the original edward bot! :) *
+*                                                                      *
+************************************************************************
+
+Code used from:
+
+* http://agpl.fsf.org/emailselfdefense.fsf.org/edward/CURRENT/edward.tar.gz
+
+"""
+
+import sys
+import email.parser
+import gpgme
+import re
+import io
+import time
+
+def main ():
+
+    txt = sys.stdin.read()
+
+    msg = email.parser.Parser().parsestr(txt)
+
+    print("From: " + msg['From'])
+    print("Subject: " + msg['Subject'])
+    print()
+
+    msg_walk(msg)
+
+
+def msg_walk (msg):
+
+    for part in msg.walk():
+        if part.get_content_type() == 'multipart':
+            continue
+        else:
+            filename  = part.get_filename()
+            conttype  = part.get_content_type()
+            descrip_p = part.get_params(header='content-description')
+
+            charset   = part.get_content_charset()
+            payload_b = part.get_payload(decode=True)
+
+            if payload_b == None:
+                continue
+
+            if descrip_p == None:
+                decript = ""
+            else:
+                descript = descrip_p[0][0]
+
+            if charset == None:
+                charset = 'utf-8'
+
+            payload = payload_b.decode(charset)
+
+            if conttype == "application/pgp-encrypted":
+                if descript == 'PGP/MIME version identification':
+                    if payload.strip() != "Version: 1":
+                        print("*** Warning... unknown pgp/mime version: " \
+                                + payload.strip())
+                continue
+
+            if (filename == "encrypted.asc") or (conttype == "pgp/mime"):
+                dec_msg = decrypt_payload(payload)
+                print_decrypted(dec_msg)
+
+            elif conttype == "text/plain":
+                print(payload)
+
+            else:
+                print(payload)
+
+
+def print_decrypted (message):
+
+    if message == None:
+        return
+
+    for chunk in message:
+        msg = email.parser.Parser().parsestr(chunk[0])
+        sigs = chunk[1]
+
+        msg_walk(msg)
+        for sig in sigs:
+            print_sig(sig)
+
+def print_sig (sig):
+
+        if sig.summary != 0:
+            print("bad sig: " + str(sig.summary))
+            #continue
+        
+        fpr = sig.fpr
+        utc = time.gmtime(sig.timestamp)
+
+        g = gpgme.Context()
+        key = g.get_key(fpr)
+
+        name = key.uids[0].name
+        e_addr = key.uids[0].email
+        comment = key.uids[0].comment
+
+        date = "{0:0>4}-{1:0>2}-{2:0>2} {3}:{4}:{5} UTC".format(*utc)
+
+        print("sig from: " + name + " (" + comment + ") <" \
+                + e_addr + ">")
+        print("fingerprint: " + fpr)
+        print("date: " + date)
+
+
+def decrypt_payload (payload):
+
+    blocks = split_message(payload)
+    message = decrypt_blocks(blocks)
+
+    return message
+
+
+def split_message (text):
+
+    pgp_matches = re.search( \
+            '(-----BEGIN PGP MESSAGE-----' \
+            '.*' \
+            '-----END PGP MESSAGE-----)', \
+            text, \
+            re.DOTALL)
+
+    if pgp_matches == None:
+        return None
+    else:
+        return pgp_matches.groups()
+
+
+def decrypt_blocks (blocks):
+
+    if blocks == None:
+        return None
+
+    message = []
+    for block in blocks:
+        plain, sigs = decrypt_block(block)
+
+        message = message + [(plain, sigs)]
+
+    return message
+
+
+def decrypt_block (block):
+
+    block_b = io.BytesIO(block.encode('ASCII'))
+    plain_b = io.BytesIO()
+
+    g = gpgme.Context()
+    sigs = g.decrypt_verify(block_b, plain_b)
+
+    plain = plain_b.getvalue().decode('ASCII')
+    return (plain, sigs)
+
+
+main()
+
