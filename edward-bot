@@ -148,11 +148,11 @@ def format_sig (sig):
     validity = sig.validity
     if validity == gpgme.VALIDITY_ULTIMATE \
             or validity == gpgme.VALIDITY_FULL:
-        status = "Good Signature "
+        status = "MAYBE-Good Signature "
     elif validity == gpgme.VALIDITY_MARGINAL:
-        status = "Marginal Signature "
+        status = "MAYBE-Marginal Signature "
     else:
-        status = "BAD Signature "
+        status = "MAYBE-BAD Signature "
 
 
     sig_str  = "Signature Made " + date + " using key ID " + fprint_short + "\n"
