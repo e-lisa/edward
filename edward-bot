@@ -56,30 +56,13 @@ def msg_walk (msg):
     body = ""
     for part in msg.walk():
 
-        if part.get_content_type() == 'multipart':
+        payload, descript, filename, conttype = get_part_info(part)
+
+        if payload == None:
             continue
 
-        charset   = part.get_content_charset()
-        payload_b = part.get_payload(decode=True)
-
-        filename  = part.get_filename()
-        conttype  = part.get_content_type()
-        descrip_p = part.get_params(header='content-description')
-
-        if charset == None:
-            charset = 'utf-8'
-
-        if payload_b == None:
+        if conttype == 'multipart':
             continue
-        else:
-            payload = payload_b.decode(charset)
-
-
-        if descrip_p == None:
-            decript = ""
-        else:
-            descript = descrip_p[0][0]
-
 
         if conttype == "application/pgp-encrypted":
             if descript == 'PGP/MIME version identification':
@@ -88,7 +71,8 @@ def msg_walk (msg):
                             + payload.strip(), file=sys.stderr)
             continue
 
-        elif (filename == "encrypted.asc") or (conttype == "pgp/mime"):
+
+        if (filename == "encrypted.asc") or (conttype == "pgp/mime"):
             payload_dec = decrypt_payload(payload)
             body += payload_dec
 
@@ -99,6 +83,31 @@ def msg_walk (msg):
             body += payload + "\n"
 
     return body
+
+def get_part_info (part):
+
+    charset   = part.get_content_charset()
+    payload_b = part.get_payload(decode=True)
+
+    filename  = part.get_filename()
+    conttype  = part.get_content_type()
+    descrip_p = part.get_params(header='content-description')
+
+    if charset == None:
+        charset = 'utf-8'
+
+    if payload_b == None:
+        payload = None
+    else:
+        payload = payload_b.decode(charset)
+
+    if descrip_p == None:
+        descript = None
+    else:
+        descript = descrip_p[0][0]
+
+
+    return payload, descript, filename, conttype
 
 
 def decrypt_payload (payload):
