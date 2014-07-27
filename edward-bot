@@ -111,22 +111,22 @@ def print_sig (sig):
             print("bad sig: " + str(sig.summary))
             #continue
         
-        fpr = sig.fpr
+        fprint = sig.fpr
         timestamp = time.localtime(sig.timestamp)
 
         g = gpgme.Context()
-        key = g.get_key(fpr)
+        key = g.get_key(fprint)
 
         name = key.uids[0].name
         e_addr = key.uids[0].email
         comment = key.uids[0].comment
 
         date = time.strftime("%a %d %b %Y %I:%M:%S %p %Z", timestamp)
+        fprint_short = re.search("[0-9A-Fa-f]{32}([0-9A-Fa-f]{8})", fprint).groups()[0]
 
-        print("sig from: " + name + " (" + comment + ") <" \
+        print("Signature Made " + date + " using key " + fprint_short)
+        print("From " + name + " (" + comment + ") <" \
                 + e_addr + ">")
-        print("fingerprint: " + fpr)
-        print("date: " + date)
 
 
 def decrypt_payload (payload):
