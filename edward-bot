@@ -55,25 +55,27 @@ def msg_walk (msg):
         if part.get_content_type() == 'multipart':
             continue
 
+        charset   = part.get_content_charset()
+        payload_b = part.get_payload(decode=True)
+
         filename  = part.get_filename()
         conttype  = part.get_content_type()
         descrip_p = part.get_params(header='content-description')
 
-        charset   = part.get_content_charset()
-        payload_b = part.get_payload(decode=True)
+        if charset == None:
+            charset = 'utf-8'
 
         if payload_b == None:
             continue
+        else:
+            payload = payload_b.decode(charset)
+
 
         if descrip_p == None:
             decript = ""
         else:
             descript = descrip_p[0][0]
 
-        if charset == None:
-            charset = 'utf-8'
-
-        payload = payload_b.decode(charset)
 
         if conttype == "application/pgp-encrypted":
             if descript == 'PGP/MIME version identification':
@@ -82,7 +84,7 @@ def msg_walk (msg):
                             + payload.strip())
             continue
 
-        if (filename == "encrypted.asc") or (conttype == "pgp/mime"):
+        elif (filename == "encrypted.asc") or (conttype == "pgp/mime"):
             dec_msg = decrypt_payload(payload)
             print_decrypted(dec_msg)
 
