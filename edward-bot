@@ -107,15 +107,16 @@ def print_decrypted (message):
 
 def print_sig (sig):
 
-        if sig.summary != 0:
-            print("bad sig: " + str(sig.summary))
-            #continue
-        
         fprint = sig.fpr
         timestamp = time.localtime(sig.timestamp)
 
         g = gpgme.Context()
         key = g.get_key(fprint)
+
+        # right now i'm just choosing the first user id, even if that id isn't
+        # signed by the user yet another is. if a user id is printed, it should
+        # at least be one that is signed, and/or correspond to the From:
+        # field's email address and full name.
 
         name = key.uids[0].name
         e_addr = key.uids[0].email
@@ -124,8 +125,21 @@ def print_sig (sig):
         date = time.strftime("%a %d %b %Y %I:%M:%S %p %Z", timestamp)
         fprint_short = re.search("[0-9A-Fa-f]{32}([0-9A-Fa-f]{8})", fprint).groups()[0]
 
-        print("Signature Made " + date + " using key " + fprint_short)
-        print("From " + name + " (" + comment + ") <" \
+        # this section needs some work. signature summary, validity, status,
+        # and wrong_key_usage all complicate the picture. their enum/#define
+        # values overlap, which makes things more complicated.
+
+        validity = sig.validity
+        if validity == gpgme.VALIDITY_ULTIMATE \
+                or validity == gpgme.VALIDITY_FULL:
+            status = "Good Signature "
+        elif validity == gpgme.VALIDITY_MARGINAL:
+            status = "Marginal Signature "
+        else:
+            status = "BAD Signature "
+
+        print("Signature Made " + date + " using key ID " + fprint_short)
+        print(status + "from " + name + " (" + comment + ") <" \
                 + e_addr + ">")
 
 
