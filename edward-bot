@@ -108,7 +108,10 @@ def print_decrypted (message):
 def print_sig (sig):
 
         fprint = sig.fpr
+        fprint_short = re.search("[0-9A-Fa-f]{32}([0-9A-Fa-f]{8})", fprint).groups()[0]
+
         timestamp = time.localtime(sig.timestamp)
+        date = time.strftime("%a %d %b %Y %I:%M:%S %p %Z", timestamp)
 
         g = gpgme.Context()
         key = g.get_key(fprint)
@@ -122,9 +125,6 @@ def print_sig (sig):
         e_addr = key.uids[0].email
         comment = key.uids[0].comment
 
-        date = time.strftime("%a %d %b %Y %I:%M:%S %p %Z", timestamp)
-        fprint_short = re.search("[0-9A-Fa-f]{32}([0-9A-Fa-f]{8})", fprint).groups()[0]
-
         # this section needs some work. signature summary, validity, status,
         # and wrong_key_usage all complicate the picture. their enum/#define
         # values overlap, which makes things more complicated.
@@ -137,6 +137,7 @@ def print_sig (sig):
             status = "Marginal Signature "
         else:
             status = "BAD Signature "
+
 
         print("Signature Made " + date + " using key ID " + fprint_short)
         print(status + "from " + name + " (" + comment + ") <" \
