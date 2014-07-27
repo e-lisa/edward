@@ -37,8 +37,9 @@ import time
 
 def main ():
 
-    txt = sys.stdin.read()
+    handle_args()
 
+    txt = sys.stdin.read()
     msg = email.parser.Parser().parsestr(txt)
 
     print("From: " + msg['From'])
@@ -80,8 +81,8 @@ def msg_walk (msg):
         if conttype == "application/pgp-encrypted":
             if descript == 'PGP/MIME version identification':
                 if payload.strip() != "Version: 1":
-                    print("*** Warning... unknown pgp/mime version: " \
-                            + payload.strip())
+                    print(progname + ": Warning: unknown " + descript + ": " \
+                            + payload.strip(), file=sys.stderr)
             continue
 
         elif (filename == "encrypted.asc") or (conttype == "pgp/mime"):
@@ -194,6 +195,18 @@ def decrypt_block (block):
 
     plain = plain_b.getvalue().decode('ASCII')
     return (plain, sigs)
+
+
+def handle_args ():
+    if __name__ == "__main__":
+
+        global progname
+        progname = sys.argv[0]
+
+        if len(sys.argv) > 1:
+            print(progname + ": error, this program doesn't " \
+                    "need any arguments.", file=sys.stderr)
+            exit(1)
 
 
 main()
