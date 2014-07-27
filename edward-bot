@@ -112,7 +112,7 @@ def print_sig (sig):
             #continue
         
         fpr = sig.fpr
-        utc = time.gmtime(sig.timestamp)
+        timestamp = time.localtime(sig.timestamp)
 
         g = gpgme.Context()
         key = g.get_key(fpr)
@@ -121,7 +121,7 @@ def print_sig (sig):
         e_addr = key.uids[0].email
         comment = key.uids[0].comment
 
-        date = "{0:0>4}-{1:0>2}-{2:0>2} {3}:{4}:{5} UTC".format(*utc)
+        date = time.strftime("%a %d %b %Y %I:%M:%S %p %Z", timestamp)
 
         print("sig from: " + name + " (" + comment + ") <" \
                 + e_addr + ">")
