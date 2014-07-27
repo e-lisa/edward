@@ -42,15 +42,18 @@ def main ():
     txt = sys.stdin.read()
     msg = email.parser.Parser().parsestr(txt)
 
-    print("From: " + msg['From'])
-    print("Subject: " + msg['Subject'])
-    print()
+    message  = ""
+    message += "From: " + msg['From'] + "\n"
+    message += "Subject: " + msg['Subject'] + "\n\n"
 
-    msg_walk(msg)
+    message += msg_walk(msg)
+
+    print(message)
 
 
 def msg_walk (msg):
 
+    body = ""
     for part in msg.walk():
 
         if part.get_content_type() == 'multipart':
@@ -86,30 +89,39 @@ def msg_walk (msg):
             continue
 
         elif (filename == "encrypted.asc") or (conttype == "pgp/mime"):
-            dec_msg = decrypt_payload(payload)
-            print_decrypted(dec_msg)
+            payload_dec = decrypt_payload(payload)
+            body += payload_dec
 
         elif conttype == "text/plain":
-            print(payload)
+            body += payload + "\n"
 
         else:
-            print(payload)
+            body += payload + "\n"
+
+    return body
 
 
-def print_decrypted (message):
+def decrypt_payload (payload):
 
-    if message == None:
+    blocks = split_message(payload)
+    decrypted_tree = decrypt_blocks(blocks)
+
+    if decrypted_tree == None:
         return
 
-    for chunk in message:
-        msg = email.parser.Parser().parsestr(chunk[0])
-        sigs = chunk[1]
+    body = ""
+    for node in decrypted_tree:
+        msg = email.parser.Parser().parsestr(node[0])
+        sigs = node[1]
 
-        msg_walk(msg)
+        body += msg_walk(msg)
         for sig in sigs:
-            print_sig(sig)
+            body += format_sig(sig)
 
-def print_sig (sig):
+    return body
+
+
+def format_sig (sig):
 
     fprint = sig.fpr
     fprint_short = re.search("[0-9A-Fa-f]{32}([0-9A-Fa-f]{8})", fprint).groups()[0]
@@ -143,17 +155,10 @@ def print_sig (sig):
         status = "BAD Signature "
 
 
-    print("Signature Made " + date + " using key ID " + fprint_short)
-    print(status + "from " + name + " (" + comment + ") <" \
-            + e_addr + ">")
+    sig_str  = "Signature Made " + date + " using key ID " + fprint_short + "\n"
+    sig_str += status + "from " + name + " (" + comment + ") <" + e_addr + ">"
 
-
-def decrypt_payload (payload):
-
-    blocks = split_message(payload)
-    message = decrypt_blocks(blocks)
-
-    return message
+    return sig_str
 
 
 def split_message (text):
