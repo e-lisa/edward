@@ -51,45 +51,46 @@ def main ():
 def msg_walk (msg):
 
     for part in msg.walk():
+
         if part.get_content_type() == 'multipart':
             continue
+
+        filename  = part.get_filename()
+        conttype  = part.get_content_type()
+        descrip_p = part.get_params(header='content-description')
+
+        charset   = part.get_content_charset()
+        payload_b = part.get_payload(decode=True)
+
+        if payload_b == None:
+            continue
+
+        if descrip_p == None:
+            decript = ""
         else:
-            filename  = part.get_filename()
-            conttype  = part.get_content_type()
-            descrip_p = part.get_params(header='content-description')
+            descript = descrip_p[0][0]
 
-            charset   = part.get_content_charset()
-            payload_b = part.get_payload(decode=True)
+        if charset == None:
+            charset = 'utf-8'
 
-            if payload_b == None:
-                continue
+        payload = payload_b.decode(charset)
 
-            if descrip_p == None:
-                decript = ""
-            else:
-                descript = descrip_p[0][0]
+        if conttype == "application/pgp-encrypted":
+            if descript == 'PGP/MIME version identification':
+                if payload.strip() != "Version: 1":
+                    print("*** Warning... unknown pgp/mime version: " \
+                            + payload.strip())
+            continue
 
-            if charset == None:
-                charset = 'utf-8'
+        if (filename == "encrypted.asc") or (conttype == "pgp/mime"):
+            dec_msg = decrypt_payload(payload)
+            print_decrypted(dec_msg)
 
-            payload = payload_b.decode(charset)
+        elif conttype == "text/plain":
+            print(payload)
 
-            if conttype == "application/pgp-encrypted":
-                if descript == 'PGP/MIME version identification':
-                    if payload.strip() != "Version: 1":
-                        print("*** Warning... unknown pgp/mime version: " \
-                                + payload.strip())
-                continue
-
-            if (filename == "encrypted.asc") or (conttype == "pgp/mime"):
-                dec_msg = decrypt_payload(payload)
-                print_decrypted(dec_msg)
-
-            elif conttype == "text/plain":
-                print(payload)
-
-            else:
-                print(payload)
+        else:
+            print(payload)
 
 
 def print_decrypted (message):
@@ -107,41 +108,41 @@ def print_decrypted (message):
 
 def print_sig (sig):
 
-        fprint = sig.fpr
-        fprint_short = re.search("[0-9A-Fa-f]{32}([0-9A-Fa-f]{8})", fprint).groups()[0]
+    fprint = sig.fpr
+    fprint_short = re.search("[0-9A-Fa-f]{32}([0-9A-Fa-f]{8})", fprint).groups()[0]
 
-        timestamp = time.localtime(sig.timestamp)
-        date = time.strftime("%a %d %b %Y %I:%M:%S %p %Z", timestamp)
+    timestamp = time.localtime(sig.timestamp)
+    date = time.strftime("%a %d %b %Y %I:%M:%S %p %Z", timestamp)
 
-        g = gpgme.Context()
-        key = g.get_key(fprint)
+    g = gpgme.Context()
+    key = g.get_key(fprint)
 
-        # right now i'm just choosing the first user id, even if that id isn't
-        # signed by the user yet another is. if a user id is printed, it should
-        # at least be one that is signed, and/or correspond to the From:
-        # field's email address and full name.
+    # right now i'm just choosing the first user id, even if that id isn't
+    # signed by the user yet another is. if a user id is printed, it should
+    # at least be one that is signed, and/or correspond to the From:
+    # field's email address and full name.
 
-        name = key.uids[0].name
-        e_addr = key.uids[0].email
-        comment = key.uids[0].comment
+    name = key.uids[0].name
+    e_addr = key.uids[0].email
+    comment = key.uids[0].comment
 
-        # this section needs some work. signature summary, validity, status,
-        # and wrong_key_usage all complicate the picture. their enum/#define
-        # values overlap, which makes things more complicated.
+    # this section needs some work. signature summary, validity, status,
+    # and wrong_key_usage all complicate the picture. their enum/#define
+    # values overlap, which makes things more complicated.
 
-        validity = sig.validity
-        if validity == gpgme.VALIDITY_ULTIMATE \
-                or validity == gpgme.VALIDITY_FULL:
-            status = "Good Signature "
-        elif validity == gpgme.VALIDITY_MARGINAL:
-            status = "Marginal Signature "
-        else:
-            status = "BAD Signature "
+    validity = sig.validity
+    if validity == gpgme.VALIDITY_ULTIMATE \
+            or validity == gpgme.VALIDITY_FULL:
+        status = "Good Signature "
+    elif validity == gpgme.VALIDITY_MARGINAL:
+        status = "Marginal Signature "
+    else:
+        status = "BAD Signature "
 
 
-        print("Signature Made " + date + " using key ID " + fprint_short)
-        print(status + "from " + name + " (" + comment + ") <" \
-                + e_addr + ">")
+    print("Signature Made " + date + " using key ID " + fprint_short)
+    print(status + "from " + name + " (" + comment + ") <" \
+            + e_addr + ">")
 
 
 def decrypt_payload (payload):
