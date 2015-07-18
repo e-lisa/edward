@@ -210,22 +210,28 @@ def choose_reply_encryption_key (keys):
             reply_key = key
             break
 
-    return key
+    return reply_key
 
 
 def generate_reply (plaintext, email_from, email_subject, encrypt_to_key,
                     sign_with_fingerprint):
 
-    plaintext_reply  = "thanks for the message!\n\n\n"
-    plaintext_reply += email_quote_text(plaintext)
-
-    encrypted_reply = encrypt_sign_message(plaintext_reply, encrypt_to_key,
-                                           sign_with_fingerprint)
-
     reply  = "To: " + email_from + "\n"
     reply += "Subject: " + email_subject + "\n"
     reply += "\n"
-    reply += encrypted_reply
+
+    if (encrypt_to_key != None):
+        plaintext_reply  = "thanks for the message!\n\n\n"
+        plaintext_reply += email_quote_text(plaintext)
+
+        encrypted_reply = encrypt_sign_message(plaintext_reply, encrypt_to_key,
+                                               sign_with_fingerprint)
+
+        reply += encrypted_reply
+
+    else:
+        reply += "Sorry, i couldn't find your key.\n"
+        reply += "I'll need that to encrypt a message to you."
 
     return reply
 
