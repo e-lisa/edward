@@ -42,16 +42,15 @@ def main ():
 
     email_text = sys.stdin.read()
 
-    plaintext, keys = email_decode_flatten (email_text)
     email_from, email_subject = email_from_subject(email_text)
 
-    reply_encrypt_to_key = choose_reply_encryption_key(keys)
+    plaintext, keys = email_decode_flatten (email_text)
+    encrypt_to_key = choose_reply_encryption_key(keys)
 
-    print("From: " + email_from)
-    print("Subject: " + email_subject)
-    print(plaintext)
+    reply_message = generate_reply(plaintext, email_from, \
+                                   email_subject, encrypt_to_key)
 
-    print(reply_encrypt_to_key.subkeys[0].fpr)
+    print(reply_message)
 
 
 def email_decode_flatten (email_text):
@@ -216,6 +215,34 @@ def choose_reply_encryption_key (keys):
             break
 
     return key
+
+
+def generate_reply (plaintext, email_from, email_subject, encrypt_to_key):
+
+    plaintext_reply = "thanks for the message!\n\n\n" + plaintext
+
+    encrypted_reply = encrypt_message(plaintext_reply, encrypt_to_key)
+
+    reply  = "To: " + email_from + "\n"
+    reply += "Subject: " + email_subject + "\n"
+    reply += encrypted_reply
+
+    return reply
+
+
+def encrypt_message (plaintext, encrypt_to_key):
+
+    gpgme_ctx = gpgme.Context()
+    gpgme_ctx.armor = True
+
+    plaintext_bytes = io.BytesIO(plaintext.encode('UTF-8'))
+    encrypted_bytes = io.BytesIO()
+
+    gpgme_ctx.encrypt([encrypt_to_key], gpgme.ENCRYPT_ALWAYS_TRUST,
+            plaintext_bytes, encrypted_bytes)
+
+    encrypted_txt = encrypted_bytes.getvalue().decode('ASCII')
+    return encrypted_txt
 
 
 def handle_args ():
