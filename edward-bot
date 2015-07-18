@@ -219,15 +219,24 @@ def choose_reply_encryption_key (keys):
 
 def generate_reply (plaintext, email_from, email_subject, encrypt_to_key):
 
-    plaintext_reply = "thanks for the message!\n\n\n" + plaintext
+    plaintext_reply  = "thanks for the message!\n\n\n"
+    plaintext_reply += email_quote_text(plaintext)
 
     encrypted_reply = encrypt_message(plaintext_reply, encrypt_to_key)
 
     reply  = "To: " + email_from + "\n"
     reply += "Subject: " + email_subject + "\n"
+    reply += "\n"
     reply += encrypted_reply
 
     return reply
+
+
+def email_quote_text (text):
+
+    quoted_message = re.sub(r'^', r'> ', text, flags=re.MULTILINE)
+
+    return quoted_message
 
 
 def encrypt_message (plaintext, encrypt_to_key):
