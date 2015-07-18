@@ -45,12 +45,13 @@ def main ():
     plaintext, keys = email_decode_flatten (email_text)
     email_from, email_subject = email_from_subject(email_text)
 
+    reply_encrypt_to_key = choose_reply_encryption_key(keys)
+
     print("From: " + email_from)
     print("Subject: " + email_subject)
     print(plaintext)
 
-    for key in keys:
-        print(key.subkeys[0].fpr)
+    print(reply_encrypt_to_key.subkeys[0].fpr)
 
 
 def email_decode_flatten (email_text):
@@ -204,6 +205,17 @@ def decrypt_chunk (gpg_chunk):
 
     plaintext = plain_b.getvalue().decode('ASCII')
     return (plaintext, sigs)
+
+
+def choose_reply_encryption_key (keys):
+
+    reply_key = None
+    for key in keys:
+        if (key.can_encrypt == True):
+            reply_key = key
+            break
+
+    return key
 
 
 def handle_args ():
