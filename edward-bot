@@ -41,25 +41,16 @@ def main ():
     handle_args()
 
     email_text = sys.stdin.read()
-    message, keys = decode_simplify_email(email_text)
 
-    print(message)
+    plaintext, keys = email_decode_flatten (email_text)
+    email_from, email_subject = email_from_subject(email_text)
+
+    print("From: " + email_from)
+    print("Subject: " + email_subject)
+    print(plaintext)
 
     for key in keys:
         print(key.subkeys[0].fpr)
-
-
-def decode_simplify_email (email_text):
-
-    plaintext, keys = email_decode_flatten(email_text)
-
-    email_from, email_subject = get_from_subject(email_text)
-
-    simplified_msg  = "From: " + email_from + "\n"
-    simplified_msg += "Subject: " + email_subject + "\n\n"
-    simplified_msg += plaintext
-
-    return simplified_msg, keys
 
 
 def email_decode_flatten (email_text):
@@ -104,7 +95,7 @@ def email_decode_flatten (email_text):
     return body, keys
 
 
-def get_from_subject (email_text):
+def email_from_subject (email_text):
 
     email_struct = email.parser.Parser().parsestr(email_text)
 
