@@ -48,7 +48,8 @@ def main ():
     encrypt_to_key = choose_reply_encryption_key(keys)
 
     reply_message = generate_reply(plaintext, email_from, \
-                                   email_subject, encrypt_to_key)
+                                   email_subject, encrypt_to_key,
+                                   "DAB4F989E2788B8DF058E0EFEF1EC52039B36E58")
 
     print(reply_message)
 
@@ -217,12 +218,14 @@ def choose_reply_encryption_key (keys):
     return key
 
 
-def generate_reply (plaintext, email_from, email_subject, encrypt_to_key):
+def generate_reply (plaintext, email_from, email_subject, encrypt_to_key,
+                    sign_with_fingerprint):
 
     plaintext_reply  = "thanks for the message!\n\n\n"
     plaintext_reply += email_quote_text(plaintext)
 
-    encrypted_reply = encrypt_message(plaintext_reply, encrypt_to_key)
+    encrypted_reply = encrypt_sign_message(plaintext_reply, encrypt_to_key,
+                                           sign_with_fingerprint)
 
     reply  = "To: " + email_from + "\n"
     reply += "Subject: " + email_subject + "\n"
@@ -239,15 +242,18 @@ def email_quote_text (text):
     return quoted_message
 
 
-def encrypt_message (plaintext, encrypt_to_key):
+def encrypt_sign_message (plaintext, encrypt_to_key, sign_with_fingerprint):
 
     gpgme_ctx = gpgme.Context()
     gpgme_ctx.armor = True
 
+    sign_with_key = gpgme_ctx.get_key(sign_with_fingerprint)
+    gpgme_ctx.signers = [sign_with_key]
+
     plaintext_bytes = io.BytesIO(plaintext.encode('UTF-8'))
     encrypted_bytes = io.BytesIO()
 
-    gpgme_ctx.encrypt([encrypt_to_key], gpgme.ENCRYPT_ALWAYS_TRUST,
+    gpgme_ctx.encrypt_sign([encrypt_to_key], gpgme.ENCRYPT_ALWAYS_TRUST,
             plaintext_bytes, encrypted_bytes)
 
     encrypted_txt = encrypted_bytes.getvalue().decode('ASCII')
