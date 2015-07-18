@@ -186,12 +186,7 @@ def split_message (text):
 
 def decrypt_chunks (gpg_chunks):
 
-    plaintext_and_sigs_chunks = []
-
-    for gpg_chunk in gpg_chunks:
-        plaintext_and_sigs_chunks += [decrypt_chunk(gpg_chunk)]
-
-    return plaintext_and_sigs_chunks
+    return map(decrypt_chunk, gpg_chunks)
 
 
 def decrypt_chunk (gpg_chunk):
