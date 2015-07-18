@@ -51,18 +51,18 @@ def main ():
 
 def decode_simplify_email (email_text):
 
-    body, keys = email_struct_decode_flatten(email_text)
+    plaintext, keys = email_decode_flatten(email_text)
+
     email_from, email_subject = get_from_subject(email_text)
 
-    message  = ""
-    message += "From: " + email_from + "\n"
-    message += "Subject: " + email_subject + "\n\n"
-    message += body
+    simplified_msg  = "From: " + email_from + "\n"
+    simplified_msg += "Subject: " + email_subject + "\n\n"
+    simplified_msg += plaintext
 
-    return message, keys
+    return simplified_msg, keys
 
 
-def email_struct_decode_flatten (email_text):
+def email_decode_flatten (email_text):
 
     body = ""
     keys = []
@@ -157,7 +157,7 @@ def decrypt_text (gpg_text):
             keys += [key]
 
         # recursive for nested layers of mime and/or gpg
-        plaintext, more_keys = email_struct_decode_flatten(plaintext)
+        plaintext, more_keys = email_decode_flatten(plaintext)
 
         body += plaintext
         keys += more_keys
@@ -169,25 +169,27 @@ def get_pub_key (sig):
 
     gpgme_ctx = gpgme.Context()
 
-    finger_print = sig.fpr
-    key = gpgme_ctx.get_key(finger_print)
+    fingerprint = sig.fpr
+    key = gpgme_ctx.get_key(fingerprint)
 
     return key
 
 
 def split_message (text):
 
-    pgp_matches = re.search( \
+    gpg_matches = re.search( \
             '(-----BEGIN PGP MESSAGE-----' + \
             '.*' + \
             '-----END PGP MESSAGE-----)', \
             text, \
             re.DOTALL)
 
-    if pgp_matches == None:
-        return ()
+    if gpg_matches != None:
+        gpg_chunks = gpg_matches.groups()
     else:
-        return pgp_matches.groups()
+        gpg_chunks = ()
+
+    return gpg_chunks
 
 
 def decrypt_chunks (gpg_chunks):
