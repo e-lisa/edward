@@ -173,7 +173,7 @@ def split_message (text):
             '.*' + \
             '-----END PGP MESSAGE-----)', \
             text, \
-            re.DOTALL)
+            flags=re.DOTALL)
 
     if gpg_matches != None:
         gpg_chunks = gpg_matches.groups()
