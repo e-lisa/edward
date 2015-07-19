@@ -28,3 +28,5 @@ Code sourced from these projects:
 gnupghome = "/home/e/edward/.gnupg/"
 sign_with_key = "F357AA1A5B1FA42CFD9FE52A9FF2194CC09A61E8"
 
+debug = False
+
