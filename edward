@@ -59,9 +59,7 @@ def main ():
     gpgme_ctx = gpgme.Context()
     gpgme_ctx.armor = True
 
-    add_gpg_keys(email_text, gpgme_ctx)
-
-    plaintext, keys = email_decode_flatten(email_text, gpgme_ctx)
+    plaintext, keys = email_decode_flatten(email_text, gpgme_ctx, False)
     encrypt_to_key = choose_reply_encryption_key(keys)
 
     reply_message = generate_reply(plaintext, email_from, \
@@ -72,7 +70,7 @@ def main ():
     print(reply_message)
 
 
-def email_decode_flatten (email_text, gpgme_ctx):
+def email_decode_flatten (email_text, gpgme_ctx, from_decryption):
 
     body = ""
     keys = []
@@ -109,10 +107,16 @@ def email_decode_flatten (email_text, gpgme_ctx):
             keys += add_gpg_keys(payload, gpgme_ctx)
 
         elif content_type == "text/plain":
-            body += payload + "\n"
+            if from_decryption == True:
+                body += payload + "\n"
 
-        else:
-            body += payload + "\n"
+            else:
+                plaintext, more_keys = decrypt_text(payload, gpgme_ctx)
+
+                body += plaintext
+                keys += more_keys
+
+                keys += add_gpg_keys(payload, gpgme_ctx)
 
     return body, keys
 
@@ -193,7 +197,7 @@ def decrypt_text (gpg_text, gpgme_ctx):
             keys += [gpgme_ctx.get_key(sig.fpr)]
 
         # recursive for nested layers of mime and/or gpg
-        plaintext, more_keys = email_decode_flatten(plaintext, gpgme_ctx)
+        plaintext, more_keys = email_decode_flatten(plaintext, gpgme_ctx, True)
 
         body += plaintext
         keys += more_keys
