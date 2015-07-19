@@ -59,6 +59,8 @@ def main ():
     gpgme_ctx = gpgme.Context()
     gpgme_ctx.armor = True
 
+    add_gpg_keys(email_text, gpgme_ctx)
+
     plaintext, keys = email_decode_flatten(email_text, gpgme_ctx)
     encrypt_to_key = choose_reply_encryption_key(keys)
 
@@ -102,6 +104,9 @@ def email_decode_flatten (email_text, gpgme_ctx):
 
             body += plaintext
             keys += more_keys
+
+        elif content_type == "application/pgp-keys":
+            add_gpg_keys(payload, gpgme_ctx)
 
         elif content_type == "text/plain":
             body += payload + "\n"
@@ -147,12 +152,28 @@ def get_email_subpart_info (part):
     return payload, description, filename, content_type
 
 
+def add_gpg_keys (text, gpgme_ctx):
+
+    keys = scan_and_grab(text,
+                         '-----BEGIN PGP PUBLIC KEY BLOCK-----',
+                         '-----END PGP PUBLIC KEY BLOCK-----')
+
+    for key in keys:
+        fp = io.BytesIO(key.encode('ascii'))
+
+        result = gpgme_ctx.import_(fp)
+        fingerprint = result.imports[0][0]
+
+        debug("added gpg key: " + fingerprint)
+
 def decrypt_text (gpg_text, gpgme_ctx):
 
     body = ""
     keys = []
 
-    gpg_chunks = split_message(gpg_text)
+    gpg_chunks = scan_and_grab(gpg_text,
+                               '-----BEGIN PGP MESSAGE-----',
+                               '-----END PGP MESSAGE-----')
 
     plaintext_and_sigs_chunks = decrypt_chunks(gpg_chunks, gpgme_ctx)
 
@@ -181,21 +202,17 @@ def get_pub_key (sig, gpgme_ctx):
     return key
 
 
-def split_message (text):
+def scan_and_grab (text, start_text, end_text):
 
-    gpg_matches = re.search( \
-            '(-----BEGIN PGP MESSAGE-----' + \
-            '.*' + \
-            '-----END PGP MESSAGE-----)', \
-            text, \
-            flags=re.DOTALL)
+    matches = re.search('(' + start_text + '.*' + end_text + ')',
+                        text, flags=re.DOTALL)
 
-    if gpg_matches != None:
-        gpg_chunks = gpg_matches.groups()
+    if matches != None:
+        match_tuple = matches.groups()
     else:
-        gpg_chunks = ()
+        match_tuple = ()
 
-    return gpg_chunks
+    return match_tuple
 
 
 def decrypt_chunks (gpg_chunks, gpgme_ctx):
