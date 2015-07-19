@@ -33,7 +33,6 @@ import email.parser
 import gpgme
 import re
 import io
-import time
 
 
 def main ():
