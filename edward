@@ -106,7 +106,7 @@ def email_decode_flatten (email_text, gpgme_ctx):
             keys += more_keys
 
         elif content_type == "application/pgp-keys":
-            add_gpg_keys(payload, gpgme_ctx)
+            keys += add_gpg_keys(payload, gpgme_ctx)
 
         elif content_type == "text/plain":
             body += payload + "\n"
@@ -158,13 +158,19 @@ def add_gpg_keys (text, gpgme_ctx):
                          '-----BEGIN PGP PUBLIC KEY BLOCK-----',
                          '-----END PGP PUBLIC KEY BLOCK-----')
 
+    fps = []
     for key in keys:
         fp = io.BytesIO(key.encode('ascii'))
 
         result = gpgme_ctx.import_(fp)
-        fingerprint = result.imports[0][0]
 
+        fingerprint = result.imports[0][0]
         debug("added gpg key: " + fingerprint)
+
+        fps += fingerprint
+
+    return fps
+
 
 def decrypt_text (gpg_text, gpgme_ctx):
 
