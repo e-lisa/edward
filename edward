@@ -177,19 +177,18 @@ def decrypt_text (gpg_text, gpgme_ctx):
     body = ""
     keys = []
 
-    gpg_chunks = scan_and_grab(gpg_text,
+    msg_blocks = scan_and_grab(gpg_text,
                                '-----BEGIN PGP MESSAGE-----',
                                '-----END PGP MESSAGE-----')
 
-    plaintext_and_sigs_chunks = decrypt_chunks(gpg_chunks, gpgme_ctx)
+    plaintexts_and_sigs = decrypt_blocks(msg_blocks, gpgme_ctx)
 
-    for chunk in plaintext_and_sigs_chunks:
-        plaintext   = chunk[0]
-        sigs        = chunk[1]
+    for pair in plaintexts_and_sigs:
+        plaintext   = pair[0]
+        sigs        = pair[1]
 
         for sig in sigs:
-            key = get_pub_key(sig, gpgme_ctx)
-            keys += [key]
+            keys += [gpgme_ctx.get_key(sig.fpr)]
 
         # recursive for nested layers of mime and/or gpg
         plaintext, more_keys = email_decode_flatten(plaintext, gpgme_ctx)
@@ -198,14 +197,6 @@ def decrypt_text (gpg_text, gpgme_ctx):
         keys += more_keys
 
     return body, keys
-
-
-def get_pub_key (sig, gpgme_ctx):
-
-    fingerprint = sig.fpr
-    key = gpgme_ctx.get_key(fingerprint)
-
-    return key
 
 
 def scan_and_grab (text, start_text, end_text):
@@ -221,17 +212,17 @@ def scan_and_grab (text, start_text, end_text):
     return match_tuple
 
 
-def decrypt_chunks (gpg_chunks, gpgme_ctx):
+def decrypt_blocks (msg_blocks, gpgme_ctx):
 
-    return [decrypt_chunk(chunk, gpgme_ctx) for chunk in gpg_chunks]
+    return [decrypt_block(block, gpgme_ctx) for block in msg_blocks]
 
 
-def decrypt_chunk (gpg_chunk, gpgme_ctx):
+def decrypt_block (msg_block, gpgme_ctx):
 
-    chunk_b = io.BytesIO(gpg_chunk.encode('ascii'))
+    block_b = io.BytesIO(msg_block.encode('ascii'))
     plain_b = io.BytesIO()
 
-    sigs = gpgme_ctx.decrypt_verify(chunk_b, plain_b)
+    sigs = gpgme_ctx.decrypt_verify(block_b, plain_b)
 
     plaintext = plain_b.getvalue().decode('utf-8')
     return (plaintext, sigs)
