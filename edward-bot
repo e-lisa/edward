@@ -192,12 +192,12 @@ def decrypt_chunk (gpg_chunk):
 
     gpgme_ctx = gpgme.Context()
 
-    chunk_b = io.BytesIO(gpg_chunk.encode('ASCII'))
+    chunk_b = io.BytesIO(gpg_chunk.encode('ascii'))
     plain_b = io.BytesIO()
 
     sigs = gpgme_ctx.decrypt_verify(chunk_b, plain_b)
 
-    plaintext = plain_b.getvalue().decode('UTF-8')
+    plaintext = plain_b.getvalue().decode('utf-8')
     return (plaintext, sigs)
 
 
@@ -250,13 +250,13 @@ def encrypt_sign_message (plaintext, encrypt_to_key, sign_with_fingerprint):
     sign_with_key = gpgme_ctx.get_key(sign_with_fingerprint)
     gpgme_ctx.signers = [sign_with_key]
 
-    plaintext_bytes = io.BytesIO(plaintext.encode('UTF-8'))
+    plaintext_bytes = io.BytesIO(plaintext.encode('ascii'))
     encrypted_bytes = io.BytesIO()
 
     gpgme_ctx.encrypt_sign([encrypt_to_key], gpgme.ENCRYPT_ALWAYS_TRUST,
             plaintext_bytes, encrypted_bytes)
 
-    encrypted_txt = encrypted_bytes.getvalue().decode('ASCII')
+    encrypted_txt = encrypted_bytes.getvalue().decode('ascii')
     return encrypted_txt
 
 
