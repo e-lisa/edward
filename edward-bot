@@ -17,6 +17,8 @@
 * Copyright (C) 2014-2015 Andrew Engelbrecht                (AGPLv3+)  *
 * Copyright (C) 2014      Josh Drake                        (AGPLv3+)  *
 * Copyright (C) 2014      Lisa Marie Maginnis               (AGPLv3+)  *
+* Copyright (C) 2009-2015 Tails developers <tails@boum.org> ( GPLv3+)  *
+* Copyright (C) 2009      W. Trevor King <wking@drexel.edu> ( GPLv2+)  *
 *                                                                      *
 * Special thanks to Josh Drake for writing the original edward bot! :) *
 *                                                                      *
@@ -24,15 +26,24 @@
 
 Code used from:
 
-* http://agpl.fsf.org/emailselfdefense.fsf.org/edward/CURRENT/edward.tar.gz
+  * http://agpl.fsf.org/emailselfdefense.fsf.org/edward/CURRENT/edward.tar.gz
+  * https://git-tails.immerda.ch/whisperback/tree/whisperBack/encryption.py?h=feature/python3
+  * http://www.physics.drexel.edu/~wking/code/python/send_pgp_mime
 
 """
 
 import sys
-import email.parser
 import gpgme
 import re
 import io
+
+import email.parser
+import email.message
+import email.encoders
+
+from email.mime.multipart       import MIMEMultipart
+from email.mime.application     import MIMEApplication
+from email.mime.nonmultipart    import MIMENonMultipart
 
 
 def main ():
@@ -215,20 +226,50 @@ def choose_reply_encryption_key (keys):
 def generate_reply (plaintext, email_from, email_subject, encrypt_to_key,
                     sign_with_fingerprint):
 
+
     reply  = "To: " + email_from + "\n"
     reply += "Subject: " + email_subject + "\n"
-    reply += "\n"
 
     if (encrypt_to_key != None):
         plaintext_reply  = "thanks for the message!\n\n\n"
         plaintext_reply += email_quote_text(plaintext)
 
-        encrypted_reply = encrypt_sign_message(plaintext_reply, encrypt_to_key,
-                                               sign_with_fingerprint)
+        # quoted printable encoding lets most ascii characters look normal
+        # before the decrypted mime message is decoded.
+        char_set = email.charset.Charset("utf-8")
+        char_set.body_encoding = email.charset.QP
 
-        reply += encrypted_reply
+        # MIMEText doesn't allow setting the text encoding
+        # so we use MIMENonMultipart.
+        plaintext_mime = MIMENonMultipart('text', 'plain')
+        plaintext_mime.set_payload(plaintext_reply, charset=char_set)
+
+        encrypted_text = encrypt_sign_message(plaintext_mime.as_string(),
+                                              encrypt_to_key,
+                                              sign_with_fingerprint)
+
+        control_mime = MIMEApplication("Version: 1",
+                                       _subtype='pgp-encrypted',
+                                       _encoder=email.encoders.encode_7or8bit)
+        control_mime['Content-Description'] = 'PGP/MIME version identification'
+        control_mime.set_charset('us-ascii')
+
+        encoded_mime = MIMEApplication(encrypted_text,
+                                       _subtype='octet-stream; name="encrypted.asc"',
+                                       _encoder=email.encoders.encode_7or8bit)
+        encoded_mime['Content-Description'] = 'OpenPGP encrypted message'
+        encoded_mime['Content-Disposition'] = 'inline; filename="encrypted.asc"'
+        encoded_mime.set_charset('us-ascii')
+
+        message_mime = MIMEMultipart(_subtype="encrypted", protocol="application/pgp-encrypted")
+        message_mime.attach(control_mime)
+        message_mime.attach(encoded_mime)
+        message_mime['Content-Disposition'] = 'inline'
+
+        reply += message_mime.as_string()
 
     else:
+        reply += "\n"
         reply += "Sorry, i couldn't find your key.\n"
         reply += "I'll need that to encrypt a message to you."
 
