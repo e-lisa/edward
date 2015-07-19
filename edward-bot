@@ -197,7 +197,7 @@ def decrypt_chunk (gpg_chunk):
 
     sigs = gpgme_ctx.decrypt_verify(chunk_b, plain_b)
 
-    plaintext = plain_b.getvalue().decode('ASCII')
+    plaintext = plain_b.getvalue().decode('UTF-8')
     return (plaintext, sigs)
 
 
