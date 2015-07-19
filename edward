@@ -154,22 +154,22 @@ def get_email_subpart_info (part):
 
 def add_gpg_keys (text, gpgme_ctx):
 
-    keys = scan_and_grab(text,
-                         '-----BEGIN PGP PUBLIC KEY BLOCK-----',
-                         '-----END PGP PUBLIC KEY BLOCK-----')
+    key_blocks = scan_and_grab(text,
+                               '-----BEGIN PGP PUBLIC KEY BLOCK-----',
+                               '-----END PGP PUBLIC KEY BLOCK-----')
 
-    fps = []
-    for key in keys:
-        fp = io.BytesIO(key.encode('ascii'))
+    keys = []
+    for key_block in key_blocks:
+        fp = io.BytesIO(key_block.encode('ascii'))
 
         result = gpgme_ctx.import_(fp)
 
         fingerprint = result.imports[0][0]
         debug("added gpg key: " + fingerprint)
 
-        fps += fingerprint
+        keys += [gpgme_ctx.get_key(fingerprint)]
 
-    return fps
+    return keys
 
 
 def decrypt_text (gpg_text, gpgme_ctx):
