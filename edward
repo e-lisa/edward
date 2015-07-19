@@ -222,7 +222,10 @@ def decrypt_block (msg_block, gpgme_ctx):
     block_b = io.BytesIO(msg_block.encode('ascii'))
     plain_b = io.BytesIO()
 
-    sigs = gpgme_ctx.decrypt_verify(block_b, plain_b)
+    try:
+        sigs = gpgme_ctx.decrypt_verify(block_b, plain_b)
+    except:
+        return ("",[])
 
     plaintext = plain_b.getvalue().decode('utf-8')
     return (plaintext, sigs)
