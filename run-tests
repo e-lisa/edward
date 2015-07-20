@@ -18,25 +18,29 @@
 #*************************************************************************
 
 NUM_TESTS=1
-G_HOME=./tests/testgnupghome
 
 function _main {
 
     COUNT=$1
 
+    SCRIPT_DIR="$(_get_script_dir)"
+    TESTS_DIR="$SCRIPT_DIR/tests"
+    G_HOME="$TESTS_DIR/testgnupghome"
+
     ERROR_COUNT="0"
     for i in $(seq "$COUNT") ; do
 
-        TEST_INPUT="./tests/test$i.eml"
-        TEST_OUTPUT="./tests/out$i.txt"
+        TEST_INPUT="$TESTS_DIR/test$i.eml"
+        TEST_OUTPUT="$TESTS_DIR/out$i.txt"
 
-        _exec_compare "$TEST_INPUT" "$TEST_OUTPUT"
-        ERROR=$?
+        _exec_compare "$TEST_INPUT" "$TEST_OUTPUT" "$G_HOME"
+        ERROR="$?"
 
         ERROR_COUNT="$(expr "$ERROR_COUNT" + "$ERROR")"
+
     done
 
-    if [ "$ERROR_COUNT" != "0" ] ; then
+    if [ "$ERROR_COUNT" -ne "0" ] ; then
         echo "*** Failed test count: $ERROR_COUNT" >&2
         exit 1
     fi
@@ -49,6 +53,7 @@ function _exec_compare {
 
     TEST_INPUT="$1"
     TEST_OUTPUT="$2"
+    G_HOME="$3"
 
     OUT_DIFF="$(time ./edward < "$TEST_INPUT" | GNUPGHOME="$G_HOME" gpg 2> /dev/null | ./tests/flatten-mime | diff -Z -u "$TEST_OUTPUT" - )"
 
@@ -60,6 +65,16 @@ function _exec_compare {
     fi
 
     return 0
+}
+
+function _get_script_dir {
+
+    # gives the directory containing this script
+    # https://stackoverflow.com/questions/59895
+    SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+    echo -n "$SCRIPT_DIR"
+
 }
 
 _main $NUM_TESTS
