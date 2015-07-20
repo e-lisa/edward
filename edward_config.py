@@ -25,8 +25,8 @@ Code sourced from these projects:
 
 """
 
-gnupghome = "/home/e/edward/.gnupg/"
-sign_with_key = "F357AA1A5B1FA42CFD9FE52A9FF2194CC09A61E8"
+gnupghome = "./tests/testgnupghome/"
+sign_with_key = "2470F96DB3CB20D2A39F89BA88611B2A4205FDDF"
 
 debug = False
 

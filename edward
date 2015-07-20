@@ -52,22 +52,39 @@ def main ():
 
     handle_args()
 
+    gpgme_ctx = get_gpg_context(edward_config.gnupghome,
+                              edward_config.sign_with_key)
+
     email_text = sys.stdin.read()
     email_from, email_subject = email_from_subject(email_text)
-
-    os.environ['GNUPGHOME'] = edward_config.gnupghome
-    gpgme_ctx = gpgme.Context()
-    gpgme_ctx.armor = True
 
     plaintext, keys = email_decode_flatten(email_text, gpgme_ctx, False)
     encrypt_to_key = choose_reply_encryption_key(keys)
 
     reply_message = generate_reply(plaintext, email_from, \
                                    email_subject, encrypt_to_key,
-                                   edward_config.sign_with_key,
                                    gpgme_ctx)
 
     print(reply_message)
+
+
+def get_gpg_context (gnupghome, sign_with_key_fp):
+
+    os.environ['GNUPGHOME'] = gnupghome
+
+    gpgme_ctx = gpgme.Context()
+    gpgme_ctx.armor = True
+
+    try:
+        sign_with_key = gpgme_ctx.get_key(sign_with_key_fp)
+    except:
+        error("unable to load signing key. is the gnupghome "
+                + "and signing key properly set in the edward_config.py?")
+        exit(1)
+
+    gpgme_ctx.signers = [sign_with_key]
+
+    return gpgme_ctx
 
 
 def email_decode_flatten (email_text, gpgme_ctx, from_decryption):
@@ -250,7 +267,7 @@ def choose_reply_encryption_key (keys):
 
 
 def generate_reply (plaintext, email_from, email_subject, encrypt_to_key,
-                    sign_with_fingerprint, gpgme_ctx):
+                    gpgme_ctx):
 
 
     reply  = "To: " + email_from + "\n"
@@ -272,7 +289,6 @@ def generate_reply (plaintext, email_from, email_subject, encrypt_to_key,
 
         encrypted_text = encrypt_sign_message(plaintext_mime.as_string(),
                                               encrypt_to_key,
-                                              sign_with_fingerprint,
                                               gpgme_ctx)
 
         control_mime = MIMEApplication("Version: 1",
@@ -310,10 +326,7 @@ def email_quote_text (text):
     return quoted_message
 
 
-def encrypt_sign_message (plaintext, encrypt_to_key, sign_with_fingerprint, gpgme_ctx):
-
-    sign_with_key = gpgme_ctx.get_key(sign_with_fingerprint)
-    gpgme_ctx.signers = [sign_with_key]
+def encrypt_sign_message (plaintext, encrypt_to_key, gpgme_ctx):
 
     plaintext_bytes = io.BytesIO(plaintext.encode('ascii'))
     encrypted_bytes = io.BytesIO()
@@ -325,10 +338,15 @@ def encrypt_sign_message (plaintext, encrypt_to_key, sign_with_fingerprint, gpgm
     return encrypted_txt
 
 
+def error (error_msg):
+
+    sys.stderr.write(progname + ": " + error_msg + "\n")
+
+
 def debug (debug_msg):
 
     if edward_config.debug == True:
-        sys.stderr.write(progname + ": " + debug_msg + "\n")
+        error(debug_msg)
 
 
 def handle_args ():
