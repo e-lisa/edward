@@ -58,8 +58,8 @@ def main ():
     email_text = sys.stdin.read()
     email_from, email_subject = email_from_subject(email_text)
 
-    plaintext, keys = email_decode_flatten(email_text, gpgme_ctx, False)
-    encrypt_to_key = choose_reply_encryption_key(keys)
+    plaintext, fingerprints = email_decode_flatten(email_text, gpgme_ctx, False)
+    encrypt_to_key = choose_reply_encryption_key(gpgme_ctx, fingerprints)
 
     reply_message = generate_reply(plaintext, email_from, \
                                    email_subject, encrypt_to_key,
@@ -90,7 +90,7 @@ def get_gpg_context (gnupghome, sign_with_key_fp):
 def email_decode_flatten (email_text, gpgme_ctx, from_decryption):
 
     body = ""
-    keys = []
+    fingerprints = []
 
     email_struct = email.parser.Parser().parsestr(email_text)
 
@@ -114,29 +114,29 @@ def email_decode_flatten (email_text, gpgme_ctx, from_decryption):
             continue
 
         if (filename == "encrypted.asc") or (content_type == "pgp/mime"):
-            plaintext, more_keys = decrypt_text(payload, gpgme_ctx)
+            plaintext, more_fps = decrypt_text(payload, gpgme_ctx)
 
             body += plaintext
-            keys += more_keys
+            fingerprints += more_fps
 
         elif content_type == "application/pgp-keys":
-            keys += add_gpg_keys(payload, gpgme_ctx)
+            fingerprints += add_gpg_keys(payload, gpgme_ctx)
 
         elif content_type == "text/plain":
             if from_decryption == True:
                 body += payload + "\n"
 
-                keys += add_gpg_keys(payload, gpgme_ctx)
+                fingerprints += add_gpg_keys(payload, gpgme_ctx)
 
             else:
-                plaintext, more_keys = decrypt_text(payload, gpgme_ctx)
+                plaintext, more_fps = decrypt_text(payload, gpgme_ctx)
 
                 body += plaintext
-                keys += more_keys
+                fingerprints += more_fps
 
-                keys += add_gpg_keys(payload, gpgme_ctx)
+                fingerprints += add_gpg_keys(payload, gpgme_ctx)
 
-    return body, keys
+    return body, fingerprints
 
 
 def email_from_subject (email_text):
@@ -180,7 +180,7 @@ def add_gpg_keys (text, gpgme_ctx):
                                '-----BEGIN PGP PUBLIC KEY BLOCK-----',
                                '-----END PGP PUBLIC KEY BLOCK-----')
 
-    keys = []
+    fingerprints = []
     for key_block in key_blocks:
         fp = io.BytesIO(key_block.encode('ascii'))
 
@@ -189,17 +189,17 @@ def add_gpg_keys (text, gpgme_ctx):
 
         if imports != []:
             fingerprint = imports[0][0]
-            keys += [gpgme_ctx.get_key(fingerprint)]
+            fingerprints += [fingerprint]
 
             debug("added gpg key: " + fingerprint)
 
-    return keys
+    return fingerprints
 
 
 def decrypt_text (gpg_text, gpgme_ctx):
 
     body = ""
-    keys = []
+    fingerprints = []
 
     msg_blocks = scan_and_grab(gpg_text,
                                '-----BEGIN PGP MESSAGE-----',
@@ -212,15 +212,15 @@ def decrypt_text (gpg_text, gpgme_ctx):
         sigs        = pair[1]
 
         for sig in sigs:
-            keys += [gpgme_ctx.get_key(sig.fpr)]
+            fingerprints += [sig.fpr]
 
         # recursive for nested layers of mime and/or gpg
-        plaintext, more_keys = email_decode_flatten(plaintext, gpgme_ctx, True)
+        plaintext, more_fps = email_decode_flatten(plaintext, gpgme_ctx, True)
 
         body += plaintext
-        keys += more_keys
+        fingerprints += more_fps
 
-    return body, keys
+    return body, fingerprints
 
 
 def scan_and_grab (text, start_text, end_text):
@@ -255,13 +255,19 @@ def decrypt_block (msg_block, gpgme_ctx):
     return (plaintext, sigs)
 
 
-def choose_reply_encryption_key (keys):
+def choose_reply_encryption_key (gpgme_ctx, fingerprints):
 
     reply_key = None
-    for key in keys:
-        if (key.can_encrypt == True):
-            reply_key = key
-            break
+    for fp in fingerprints:
+        try:
+            key = gpgme_ctx.get_key(fp)
+
+            if (key.can_encrypt == True):
+                reply_key = key
+                break
+        except:
+            continue
+
 
     return reply_key
 
