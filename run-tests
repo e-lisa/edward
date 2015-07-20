@@ -18,27 +18,27 @@
 #*************************************************************************
 
 NUM_TESTS=1
+#TEST_TYPES="gpg-flatten flatten plain"
+TEST_TYPES="gpg-flatten plain"
 
 function _main {
 
-    COUNT=$1
-
+    TEST_TYPES="$1"
     SCRIPT_DIR="$(_get_script_dir)"
-    TESTS_DIR="$SCRIPT_DIR/tests"
-    G_HOME="$TESTS_DIR/testgnupghome"
-    EDWARD="$SCRIPT_DIR/edward"
-    FLATTEN_MIME="$TESTS_DIR/flatten-mime"
+
+    _run_all_tests "$SCRIPT_DIR" "$TEST_TYPES"
+}
+
+function _run_all_tests {
+
+    SCRIPT_DIR="$1"
+    TEST_TYPES="$2"
 
     ERROR_COUNT="0"
-    for i in $(seq "$COUNT") ; do
+    for TYPE in $TEST_TYPES ; do
+        ERRORS="$(_run_test_type "$SCRIPT_DIR" "$TYPE")"
 
-        TEST_INPUT="$TESTS_DIR/gpg-flatten-$i.eml"
-        TEST_OUTPUT="$TESTS_DIR/gpg-flatten-$i.out"
-
-        ERROR="$(_exec_gpg_flatten "$i" "$G_HOME" "$EDWARD" "$FLATTEN_MIME" "$TEST_INPUT" "$TEST_OUTPUT")"
-
-        ERROR_COUNT="$(expr "$ERROR_COUNT" + "$ERROR")"
-
+        ERROR_COUNT="$(expr "$ERROR_COUNT" + "$ERRORS")"
     done
 
     if [ "$ERROR_COUNT" -ne "0" ] ; then
@@ -50,9 +50,40 @@ function _main {
 
 }
 
-function _exec_gpg_flatten {
+function _run_test_type {
 
-    TEST_NUM="$1"
+    SCRIPT_DIR="$1"
+    TEST_TYPE="$2"
+
+    TESTS_DIR="$SCRIPT_DIR/tests"
+    G_HOME="$TESTS_DIR/testgnupghome"
+    EDWARD="$SCRIPT_DIR/edward"
+    FLATTEN_MIME="$TESTS_DIR/flatten-mime"
+
+    ERROR_COUNT="0"
+    for TEST_NAME in $(ls $TESTS_DIR/$TEST_TYPE-*.eml) ; do
+
+        TEST_INPUT="$TEST_NAME"
+        TEST_OUTPUT="$(dirname "$TEST_NAME")/$(basename -s .eml "$TEST_NAME").out"
+
+        if [ ! -f "$TEST_OUTPUT" ] ; then
+            echo "*** $PROGNAME: ERROR: File not found: $TEST_OUTPUT" >&2
+            ERROR_COUNT="$(expr "$ERROR_COUNT" + 1 )"
+            continue
+        fi
+
+        ERROR="$("_exec_$TEST_TYPE" "$TEST_NAME" "$G_HOME" "$EDWARD" "$FLATTEN_MIME" "$TEST_INPUT" "$TEST_OUTPUT")"
+
+        ERROR_COUNT="$(expr "$ERROR_COUNT" + "$ERROR")"
+
+    done
+
+    echo "$ERROR_COUNT"
+}
+
+function _exec_gpg-flatten {
+
+    TEST_NAME="$1"
     G_HOME="$2"
     TEST_EXEC_1="$3"
     TEST_EXEC_2="$4"
@@ -61,22 +92,50 @@ function _exec_gpg_flatten {
 
     PROGRAM_OUT="$(time "$TEST_EXEC_1" < "$TEST_INPUT" | GNUPGHOME="$G_HOME" gpg 2> /dev/null | "$TEST_EXEC_2" )"
 
-    ERROR="$(_diff "$TEST_NUM" "$TEST_OUTPUT" "$PROGRAM_OUT")"
+    ERROR="$(_diff "$TEST_NAME" "$TEST_OUTPUT" "$PROGRAM_OUT")"
 
     echo "$ERROR"
+}
 
+function _exec_flatten {
+
+    TEST_NAME="$1"
+    TEST_EXEC_1="$3"
+    TEST_EXEC_2="$4"
+    TEST_INPUT="$5"
+    TEST_OUTPUT="$6"
+
+    PROGRAM_OUT="$(time "$TEST_EXEC_1" < "$TEST_INPUT" | "$TEST_EXEC_2" )"
+
+    ERROR="$(_diff "$TEST_NAME" "$TEST_OUTPUT" "$PROGRAM_OUT")"
+
+    echo "$ERROR"
+}
+
+function _exec_plain {
+
+    TEST_NAME="$1"
+    TEST_EXEC_1="$3"
+    TEST_INPUT="$5"
+    TEST_OUTPUT="$6"
+
+    PROGRAM_OUT="$(time "$TEST_EXEC_1" < "$TEST_INPUT" )"
+
+    ERROR="$(_diff "$TEST_NAME" "$TEST_OUTPUT" "$PROGRAM_OUT")"
+
+    echo "$ERROR"
 }
 
 function _diff {
 
-    TEST_NUM="$1"
+    TEST_NAME="$1"
     TEST_OUT="$2"
     PROGRAM_OUT="$3"
 
     OUT_DIFF="$(echo "$PROGRAM_OUT" | diff -u "$TEST_OUT" - )"
 
     if [ -n "$OUT_DIFF" ] ; then
-        echo "*** TEST $TEST_NUM FAILED! Output difference:" >&2
+        echo "*** $PROGNAME: TEST $(basename "$TEST_NAME") FAILED! Output difference:" >&2
         echo "$OUT_DIFF" >&2
 
         echo -n "1"
@@ -93,8 +152,9 @@ function _get_script_dir {
     SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
     echo -n "$SCRIPT_DIR"
-
 }
 
-_main $NUM_TESTS
+PROGNAME="$(basename $0)"
+
+_main "$TEST_TYPES"
 
