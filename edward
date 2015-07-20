@@ -109,6 +109,8 @@ def email_decode_flatten (email_text, gpgme_ctx, from_decryption):
             if from_decryption == True:
                 body += payload + "\n"
 
+                keys += add_gpg_keys(payload, gpgme_ctx)
+
             else:
                 plaintext, more_keys = decrypt_text(payload, gpgme_ctx)
 
