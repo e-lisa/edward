@@ -17,12 +17,50 @@
 # Copyright (C) 2015 Andrew Engelbrecht                     (AGPLv3+)    *
 #*************************************************************************
 
+NUM_TESTS=1
 G_HOME=./tests/testgnupghome
 
-OUT_DIFF_1="$(time ./edward < ./tests/test1.eml | GNUPGHOME="$G_HOME" gpg 2> /dev/null | ./tests/flatten-mime | diff -Z -u ./tests/out1.txt - )"
+function _main {
 
-if [ -n "$OUT_DIFF_1" ] ; then
-    echo "*** test 1 failed! difference:" >&2
-    echo "$OUT_DIFF_1" >&2
-fi
+    COUNT=$1
+
+    ERROR_COUNT="0"
+    for i in $(seq "$COUNT") ; do
+
+        TEST_INPUT="./tests/test$i.eml"
+        TEST_OUTPUT="./tests/out$i.txt"
+
+        _exec_compare "$TEST_INPUT" "$TEST_OUTPUT"
+        ERROR=$?
+
+        ERROR_COUNT="$(expr "$ERROR_COUNT" + "$ERROR")"
+    done
+
+    if [ "$ERROR_COUNT" != "0" ] ; then
+        echo "*** Failed test count: $ERROR_COUNT" >&2
+        exit 1
+    fi
+
+    exit 0
+
+}
+
+function _exec_compare {
+
+    TEST_INPUT="$1"
+    TEST_OUTPUT="$2"
+
+    OUT_DIFF="$(time ./edward < "$TEST_INPUT" | GNUPGHOME="$G_HOME" gpg 2> /dev/null | ./tests/flatten-mime | diff -Z -u "$TEST_OUTPUT" - )"
+
+    if [ -n "$OUT_DIFF" ] ; then
+        echo "*** test 1 failed! difference:" >&2
+        echo "$OUT_DIFF" >&2
+
+        return 1
+    fi
+
+    return 0
+}
+
+_main $NUM_TESTS
 
