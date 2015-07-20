@@ -14,9 +14,9 @@
 * You should have received a copy of the GNU Affero Public License     *
 * along with Edward.  If not, see <http://www.gnu.org/licenses/>.      *
 *                                                                      *
-* Copyright (C) 2015 Andrew Engelbrecht                     (AGPLv3+)  *
 * Copyright (C) 2014 Josh Drake                             (AGPLv3+)  *
 * Copyright (C) 2014 Lisa Marie Maginnis                    (AGPLv3+)  *
+* Copyright (C) 2015 Andrew Engelbrecht                     (AGPLv3+)  *
 ************************************************************************
 
 Code sourced from these projects:
