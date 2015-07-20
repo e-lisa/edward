@@ -19,11 +19,10 @@
 
 G_HOME=./tests/testgnupghome
 
-OUT_DIFF_1="$(./edward < ./tests/test1.eml | GNUPGHOME="$G_HOME" gpg 2> /dev/null | diff -Z -u ./tests/out1.txt - )"
+OUT_DIFF_1="$(time ./edward < ./tests/test1.eml | GNUPGHOME="$G_HOME" gpg 2> /dev/null | ./tests/flatten-mime | diff -Z -u ./tests/out1.txt - )"
 
 if [ -n "$OUT_DIFF_1" ] ; then
     echo "*** test 1 failed! difference:" >&2
     echo "$OUT_DIFF_1" >&2
 fi
-
 
