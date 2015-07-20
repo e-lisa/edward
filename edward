@@ -327,7 +327,7 @@ def encrypt_sign_message (plaintext, encrypt_to_key, sign_with_fingerprint, gpgm
 def debug (debug_msg):
 
     if edward_config.debug == True:
-        sys.stderr.write(debug_msg + "\n")
+        sys.stderr.write(progname + ": " + debug_msg + "\n")
 
 
 def handle_args ():
