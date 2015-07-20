@@ -26,15 +26,16 @@ function _main {
     SCRIPT_DIR="$(_get_script_dir)"
     TESTS_DIR="$SCRIPT_DIR/tests"
     G_HOME="$TESTS_DIR/testgnupghome"
+    EDWARD="$SCRIPT_DIR/edward"
+    FLATTEN_MIME="$TESTS_DIR/flatten-mime"
 
     ERROR_COUNT="0"
     for i in $(seq "$COUNT") ; do
 
-        TEST_INPUT="$TESTS_DIR/test$i.eml"
-        TEST_OUTPUT="$TESTS_DIR/out$i.txt"
+        TEST_INPUT="$TESTS_DIR/gpg-flatten-$i.eml"
+        TEST_OUTPUT="$TESTS_DIR/gpg-flatten-$i.out"
 
-        _exec_compare "$TEST_INPUT" "$TEST_OUTPUT" "$G_HOME"
-        ERROR="$?"
+        ERROR="$(_exec_gpg_flatten "$i" "$G_HOME" "$EDWARD" "$FLATTEN_MIME" "$TEST_INPUT" "$TEST_OUTPUT")"
 
         ERROR_COUNT="$(expr "$ERROR_COUNT" + "$ERROR")"
 
@@ -49,22 +50,40 @@ function _main {
 
 }
 
-function _exec_compare {
+function _exec_gpg_flatten {
 
-    TEST_INPUT="$1"
-    TEST_OUTPUT="$2"
-    G_HOME="$3"
+    TEST_NUM="$1"
+    G_HOME="$2"
+    TEST_EXEC_1="$3"
+    TEST_EXEC_2="$4"
+    TEST_INPUT="$5"
+    TEST_OUTPUT="$6"
 
-    OUT_DIFF="$(time ./edward < "$TEST_INPUT" | GNUPGHOME="$G_HOME" gpg 2> /dev/null | ./tests/flatten-mime | diff -Z -u "$TEST_OUTPUT" - )"
+    PROGRAM_OUT="$(time "$TEST_EXEC_1" < "$TEST_INPUT" | GNUPGHOME="$G_HOME" gpg 2> /dev/null | "$TEST_EXEC_2" )"
+
+    ERROR="$(_diff "$TEST_NUM" "$TEST_OUTPUT" "$PROGRAM_OUT")"
+
+    echo "$ERROR"
+
+}
+
+function _diff {
+
+    TEST_NUM="$1"
+    TEST_OUT="$2"
+    PROGRAM_OUT="$3"
+
+    OUT_DIFF="$(echo "$PROGRAM_OUT" | diff -u "$TEST_OUT" - )"
 
     if [ -n "$OUT_DIFF" ] ; then
-        echo "*** test 1 failed! difference:" >&2
+        echo "*** TEST $TEST_NUM FAILED! Output difference:" >&2
         echo "$OUT_DIFF" >&2
 
-        return 1
+        echo -n "1"
+        return
     fi
 
-    return 0
+    echo -n "0"
 }
 
 function _get_script_dir {
