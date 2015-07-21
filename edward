@@ -134,7 +134,7 @@ def parse_pgp_mime (email_text, gpgme_ctx):
 
     eddy_obj = parse_mime(email_struct)
     eddy_obj = split_payloads(eddy_obj)
-    eddy_obj = decrypt_payloads(eddy_obj, gpgme_ctx)
+    eddy_obj = gpg_on_payloads(eddy_obj, gpgme_ctx)
 
     return eddy_obj
 
@@ -247,14 +247,14 @@ def split_payload_pieces (eddy_obj, match_type):
     eddy_obj.payload_pieces = new_pieces_list
 
 
-def decrypt_payloads (eddy_obj, gpgme_ctx):
+def gpg_on_payloads (eddy_obj, gpgme_ctx):
 
-    do_to_eddys_pieces(decrypt_payload_pieces, eddy_obj, gpgme_ctx)
+    do_to_eddys_pieces(gpg_on_payload_pieces, eddy_obj, gpgme_ctx)
 
     return eddy_obj
 
 
-def decrypt_payload_pieces (eddy_obj, gpgme_ctx):
+def gpg_on_payload_pieces (eddy_obj, gpgme_ctx):
 
     for piece in eddy_obj.payload_pieces:
 
@@ -270,6 +270,12 @@ def decrypt_payload_pieces (eddy_obj, gpgme_ctx):
                 piece.gpg_data.sigs = sigs
                 # recurse!
                 piece.gpg_data.plainobj = parse_pgp_mime(plaintext, gpgme_ctx)
+        elif piece.piece_type == "pubkey":
+            fingerprints = add_gpg_key(piece.string, gpgme_ctx)
+
+            if fingerprints != []:
+                piece.gpg_data = GPGData()
+                piece.gpg_data.keys = fingerprints
         else:
             pass
 
@@ -290,6 +296,10 @@ def flatten_payload_pieces (eddy_obj, _ignore):
         elif piece.piece_type == "message":
             # recursive!
             string += flatten_eddy(piece.gpg_data.plainobj)
+        elif piece.piece_type == "pubkey":
+            string += "thanks for your public key:"
+            for key in piece.gpg_data.keys:
+                string += "\n" + key
 
     return string
 
@@ -304,21 +314,18 @@ def email_from_subject (email_text):
     return email_from, email_subject
 
 
-def add_gpg_keys (text, gpgme_ctx):
+def add_gpg_key (key_block, gpgme_ctx):
 
-    key_blocks = scan_and_grab(text,
-                               '-----BEGIN PGP PUBLIC KEY BLOCK-----',
-                               '-----END PGP PUBLIC KEY BLOCK-----')
+    fp = io.BytesIO(key_block.encode('ascii'))
+
+    result = gpgme_ctx.import_(fp)
+    imports = result.imports
 
     fingerprints = []
-    for key_block in key_blocks:
-        fp = io.BytesIO(key_block.encode('ascii'))
 
-        result = gpgme_ctx.import_(fp)
-        imports = result.imports
-
-        if imports != []:
-            fingerprint = imports[0][0]
+    if imports != []:
+        for import_ in imports:
+            fingerprint = import_[0]
             fingerprints += [fingerprint]
 
             debug("added gpg key: " + fingerprint)
