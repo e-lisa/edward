@@ -42,7 +42,7 @@ function _run_all_tests {
     done
 
     if [ "$ERROR_COUNT" -ne "0" ] ; then
-        echo "*** Failed test count: $ERROR_COUNT" >&2
+        echo "*** $PROGNAME: FAILED test count: $ERROR_COUNT" >&2
         exit 1
     fi
 
