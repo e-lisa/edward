@@ -196,11 +196,7 @@ def scan_and_split (payload_piece, match_type, pattern):
         rest.piece_type         = payload_piece.piece_type
 
         more_pieces = scan_and_split(rest, match_type, pattern)
-
-        if more_pieces == None:
-            pieces = [beginning, match, rest]
-        else:
-            pieces = [beginning, match] + more_pieces
+        pieces = [beginning, match ] + more_pieces
 
     return pieces
 
