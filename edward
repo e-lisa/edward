@@ -306,6 +306,8 @@ def flatten_payload_pieces (eddy_obj, _ignore):
     for piece in eddy_obj.payload_pieces:
         if piece.piece_type == "text":
             string += piece.string
+        elif piece.gpg_data == None:
+            string += "Hmmm... I wasn't able to get that part.\n"
         elif piece.piece_type == "message":
             # recursive!
             string += flatten_eddy(piece.gpg_data.plainobj)
