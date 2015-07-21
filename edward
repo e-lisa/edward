@@ -29,7 +29,6 @@ Code sourced from these projects:
   * http://agpl.fsf.org/emailselfdefense.fsf.org/edward/CURRENT/edward.tar.gz
   * https://git-tails.immerda.ch/whisperback/tree/whisperBack/encryption.py?h=feature/python3
   * http://www.physics.drexel.edu/~wking/code/python/send_pgp_mime
-
 """
 
 import sys
@@ -48,6 +47,37 @@ from email.mime.nonmultipart    import MIMENonMultipart
 
 import edward_config
 
+match_types =  [('encrypted',
+                '-----BEGIN PGP MESSAGE-----.*?-----END PGP MESSAGE-----'),
+                ('pubkey',
+                '-----BEGIN PGP PUBLIC KEY BLOCK-----.*?-----END PGP PUBLIC KEY BLOCK-----'),
+                ('detachedsig',
+                '-----END PGP SIGNATURE-----.*?-----BEGIN PGP SIGNATURE-----'),
+                ('clearsign',
+                '-----BEGIN PGP SIGNED MESSAGE-----.*?-----BEGIN PGP SIGNATURE-----.*?-----END PGP SIGNATURE-----')]
+
+
+class EddyMsg (object):
+    def __init__(self):
+        self.multipart          = False
+        self.subparts           = []
+
+        self.charset            = None
+        self.payload_bytes      = None
+        self.payload_pieces     = []
+
+        self.filename           = None
+        self.content_type       = None
+        self.description_list   = None
+
+
+class PayloadPiece (object):
+    def __init__(self):
+        self.piece_type         = None
+        self.string             = None
+        self.gpg_data           = None
+
+
 def main ():
 
     handle_args()
@@ -56,16 +86,18 @@ def main ():
                               edward_config.sign_with_key)
 
     email_text = sys.stdin.read()
+    result = parse_pgp_mime(email_text)
+
     email_from, email_subject = email_from_subject(email_text)
 
-    plaintext, fingerprints = email_decode_flatten(email_text, gpgme_ctx, False)
-    encrypt_to_key = choose_reply_encryption_key(gpgme_ctx, fingerprints)
+#    plaintext, fingerprints = email_decode_flatten(email_text, gpgme_ctx, False)
+#    encrypt_to_key = choose_reply_encryption_key(gpgme_ctx, fingerprints)
+#
+#    reply_message = generate_reply(plaintext, email_from, \
+#                                   email_subject, encrypt_to_key,
+#                                   gpgme_ctx)
 
-    reply_message = generate_reply(plaintext, email_from, \
-                                   email_subject, encrypt_to_key,
-                                   gpgme_ctx)
-
-    print(reply_message)
+    print(flatten_eddy(result))
 
 
 def get_gpg_context (gnupghome, sign_with_key_fp):
@@ -87,65 +119,124 @@ def get_gpg_context (gnupghome, sign_with_key_fp):
     return gpgme_ctx
 
 
-def email_decode_flatten (email_text, gpgme_ctx, from_decryption):
-
-    body = ""
-    fingerprints = []
+def parse_pgp_mime (email_text):
 
     email_struct = email.parser.Parser().parsestr(email_text)
 
-    for subpart in email_struct.walk():
+    eddy_obj = parse_mime(email_struct)
+    eddy_obj = split_payloads(eddy_obj)
 
-        payload, description, filename, content_type \
-                = get_email_subpart_info(subpart)
-
-        if payload == "":
-            continue
-
-        if content_type == "multipart":
-            continue
-
-        if content_type == "application/pgp-encrypted":
-            if ((description == "PGP/MIME version identification")
-                and (payload.strip() != "Version: 1")):
-                    debug("Warning: unknown " + description
-                          + ": " + payload.strip())
-            # ignore the version number
-            continue
-
-        if (filename == "encrypted.asc") or (content_type == "pgp/mime"):
-            plaintext, more_fps = decrypt_text(payload, gpgme_ctx)
-
-            body += plaintext
-            fingerprints += more_fps
-
-        elif content_type == "application/pgp-keys":
-            fingerprints += add_gpg_keys(payload, gpgme_ctx)
-
-        # this is ugly. it needs work.
-        elif content_type == "text/plain":
-            if from_decryption == True:
-                body += payload + "\n"
-
-                fingerprints += add_gpg_keys(payload, gpgme_ctx)
-
-                plaintext, more_fps = verify_clear_signature(payload, gpgme_ctx)
-                fingerprints += more_fps
-
-            else:
-                plaintext, more_fps = decrypt_text(payload, gpgme_ctx)
-                body += plaintext
-                fingerprints += more_fps
-
-                fingerprints += add_gpg_keys(payload, gpgme_ctx)
-
-                plaintext, more_fps = verify_clear_signature(payload, gpgme_ctx)
-                fingerprints += more_fps
-                body += plaintext
+    return eddy_obj
 
 
+def parse_mime(msg_struct):
 
-    return body, fingerprints
+    eddy_obj = EddyMsg()
+
+    if msg_struct.is_multipart() == True:
+        payloads = msg_struct.get_payload()
+
+        eddy_obj.multipart = True
+        eddy_obj.subparts = map(parse_mime, payloads)
+    else:
+        eddy_obj = get_subpart_data(msg_struct)
+
+    return eddy_obj
+
+
+def split_payloads (eddy_obj):
+
+    if eddy_obj.multipart == True:
+        eddy_obj.subparts = map(split_payloads, eddy_obj.subparts)
+
+    else:
+        for (match_type, pattern) in match_types:
+
+            new_pieces_list = []
+            for payload_piece in eddy_obj.payload_pieces:
+                new_pieces_list += scan_and_split(payload_piece,
+                    match_type, pattern)
+            eddy_obj.payload_pieces = new_pieces_list
+
+    return eddy_obj
+
+
+def scan_and_split (payload_piece, match_type, pattern):
+
+    flags = re.DOTALL | re.MULTILINE
+    matches = re.search("(?P<beginning>.*?)(?P<match>" + pattern +
+                        ")(?P<rest>.*)", payload_piece.string, flags=flags)
+
+    if matches == None:
+        pieces = [payload_piece]
+
+    else:
+
+        beginning               = PayloadPiece()
+        beginning.string        = matches.group('beginning')
+        beginning.piece_type    = payload_piece.piece_type
+
+        match                   = PayloadPiece()
+        match.string            = matches.group('match')
+        match.piece_type        = match_type
+
+        rest                    = PayloadPiece()
+        rest.string             = matches.group('rest')
+        rest.piece_type         = payload_piece.piece_type
+
+        more_pieces = scan_and_split(rest, match_type, pattern)
+
+        if more_pieces == None:
+            pieces = [beginning, match, rest]
+        else:
+            pieces = [beginning, match] + more_pieces
+
+    return pieces
+
+
+def get_subpart_data (part):
+
+    obj = EddyMsg()
+
+    obj.charset             = part.get_content_charset()
+    obj.payload_bytes       = part.get_payload(decode=True)
+
+    obj.filename            = part.get_filename()
+    obj.content_type        = part.get_content_type()
+    obj.description_list    = part['content-description']
+
+    # your guess is as good as a-myy-ee-ine...
+    if obj.charset == None:
+        obj.charset = 'utf-8'
+
+    if obj.payload_bytes != None:
+        # this belongs in a specific try statement.
+        payload = PayloadPiece()
+        payload.string = obj.payload_bytes.decode(obj.charset)
+        payload.piece_type = 'text'
+
+        obj.payload_pieces = [payload]
+
+    return obj
+
+
+def flatten_eddy (eddy_obj):
+
+    if eddy_obj.multipart == True:
+        string = "\n".join(map(flatten_eddy, eddy_obj.subparts))
+    else:
+        string = flatten_payload_piece(eddy_obj.payload_pieces)
+
+    return string
+
+
+def flatten_payload_piece (payload_pieces):
+
+    string = ""
+    for piece in payload_pieces:
+        string += piece.string
+
+    return string
 
 
 def email_from_subject (email_text):
@@ -156,31 +247,6 @@ def email_from_subject (email_text):
     email_subject   = email_struct['Subject']
 
     return email_from, email_subject
-
-
-def get_email_subpart_info (part):
-
-    charset             = part.get_content_charset()
-    payload_bytes       = part.get_payload(decode=True)
-
-    filename            = part.get_filename()
-    content_type        = part.get_content_type()
-    description_list    = part.get_params(header='content-description')
-
-    if charset == None:
-        charset = 'utf-8'
-
-    if payload_bytes != None:
-        payload = payload_bytes.decode(charset)
-    else:
-        payload = ""
-
-    if description_list != None:
-        description = description_list[0][0]
-    else:
-        description = ""
-
-    return payload, description, filename, content_type
 
 
 def add_gpg_keys (text, gpgme_ctx):
