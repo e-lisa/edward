@@ -122,19 +122,28 @@ def email_decode_flatten (email_text, gpgme_ctx, from_decryption):
         elif content_type == "application/pgp-keys":
             fingerprints += add_gpg_keys(payload, gpgme_ctx)
 
+        # this is ugly. it needs work.
         elif content_type == "text/plain":
             if from_decryption == True:
                 body += payload + "\n"
 
                 fingerprints += add_gpg_keys(payload, gpgme_ctx)
 
+                plaintext, more_fps = verify_clear_signature(payload, gpgme_ctx)
+                fingerprints += more_fps
+
             else:
                 plaintext, more_fps = decrypt_text(payload, gpgme_ctx)
-
                 body += plaintext
                 fingerprints += more_fps
 
                 fingerprints += add_gpg_keys(payload, gpgme_ctx)
+
+                plaintext, more_fps = verify_clear_signature(payload, gpgme_ctx)
+                fingerprints += more_fps
+                body += plaintext
+
+
 
     return body, fingerprints
 
@@ -221,6 +230,29 @@ def decrypt_text (gpg_text, gpgme_ctx):
         fingerprints += more_fps
 
     return body, fingerprints
+
+
+def verify_clear_signature (text, gpgme_ctx):
+
+    sig_blocks = scan_and_grab(text,
+                               '-----BEGIN PGP SIGNED MESSAGE-----',
+                               '-----END PGP SIGNATURE-----')
+
+    fingerprints = []
+    plaintext = ""
+
+    for sig_block in sig_blocks:
+        msg_fp = io.BytesIO(sig_block.encode('utf-8'))
+        ptxt_fp = io.BytesIO()
+
+        result = gpgme_ctx.verify(msg_fp, None, ptxt_fp)
+
+        plaintext += ptxt_fp.getvalue().decode('utf-8')
+        fingerprint = result[0].fpr
+
+        fingerprints += [fingerprint]
+
+    return plaintext, fingerprints
 
 
 def scan_and_grab (text, start_text, end_text):
