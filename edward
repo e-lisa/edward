@@ -96,17 +96,15 @@ def main ():
 
     email_text = sys.stdin.read()
     result = parse_pgp_mime(email_text, gpgme_ctx)
-
     email_from, email_subject = email_from_subject(email_text)
 
-#    plaintext, fingerprints = email_decode_flatten(email_text, gpgme_ctx, False)
+    print(flatten_eddy(result))
+
 #    encrypt_to_key = choose_reply_encryption_key(gpgme_ctx, fingerprints)
 #
 #    reply_message = generate_reply(plaintext, email_from, \
 #                                   email_subject, encrypt_to_key,
 #                                   gpgme_ctx)
-
-    print(flatten_eddy(result))
 
 
 def get_gpg_context (gnupghome, sign_with_key_fp):
