@@ -47,14 +47,14 @@ from email.mime.nonmultipart    import MIMENonMultipart
 
 import edward_config
 
-match_types =  [('encrypted',
+match_types =  [('clearsign',
+                '-----BEGIN PGP SIGNED MESSAGE-----.*?-----BEGIN PGP SIGNATURE-----.*?-----END PGP SIGNATURE-----'),
+                ('message',
                 '-----BEGIN PGP MESSAGE-----.*?-----END PGP MESSAGE-----'),
                 ('pubkey',
                 '-----BEGIN PGP PUBLIC KEY BLOCK-----.*?-----END PGP PUBLIC KEY BLOCK-----'),
                 ('detachedsig',
-                '-----END PGP SIGNATURE-----.*?-----BEGIN PGP SIGNATURE-----'),
-                ('clearsign',
-                '-----BEGIN PGP SIGNED MESSAGE-----.*?-----BEGIN PGP SIGNATURE-----.*?-----END PGP SIGNATURE-----')]
+                '-----BEGIN PGP SIGNATURE-----.*?-----END PGP SIGNATURE-----')]
 
 
 class EddyMsg (object):
@@ -78,6 +78,15 @@ class PayloadPiece (object):
         self.gpg_data           = None
 
 
+class GPGData (object):
+    def __init__(self):
+        self.decrypted          = False
+
+        self.plainobj           = None
+        self.sigs               = []
+        self.keys               = []
+
+
 def main ():
 
     handle_args()
@@ -86,7 +95,7 @@ def main ():
                               edward_config.sign_with_key)
 
     email_text = sys.stdin.read()
-    result = parse_pgp_mime(email_text)
+    result = parse_pgp_mime(email_text, gpgme_ctx)
 
     email_from, email_subject = email_from_subject(email_text)
 
@@ -119,12 +128,13 @@ def get_gpg_context (gnupghome, sign_with_key_fp):
     return gpgme_ctx
 
 
-def parse_pgp_mime (email_text):
+def parse_pgp_mime (email_text, gpgme_ctx):
 
     email_struct = email.parser.Parser().parsestr(email_text)
 
     eddy_obj = parse_mime(email_struct)
     eddy_obj = split_payloads(eddy_obj)
+    eddy_obj = decrypt_payloads(eddy_obj, gpgme_ctx)
 
     return eddy_obj
 
@@ -235,6 +245,33 @@ def do_to_eddys_pieces (function_to_do, eddy_obj, data):
     return result_list
 
 
+def decrypt_payloads (eddy_obj, gpgme_ctx):
+
+    do_to_eddys_pieces(decrypt_payload_pieces, eddy_obj, gpgme_ctx)
+
+    return eddy_obj
+
+
+def decrypt_payload_pieces (payload_pieces, gpgme_ctx):
+
+    for piece in payload_pieces:
+
+        if piece.piece_type == "text":
+            # don't transform the plaintext.
+            pass
+
+        elif piece.piece_type == "message":
+            (plaintext, sigs) = decrypt_block (piece.string, gpgme_ctx)
+
+            if plaintext:
+                piece.gpg_data = GPGData()
+                piece.gpg_data.sigs = sigs
+                # recurse!
+                piece.gpg_data.plainobj = parse_pgp_mime(plaintext, gpgme_ctx)
+        else:
+            pass
+
+
 def flatten_eddy (eddy_obj):
 
     string = "\n".join(do_to_eddys_pieces(flatten_payload_pieces, eddy_obj, None))
@@ -246,7 +283,11 @@ def flatten_payload_pieces (payload_pieces, _ignore):
 
     string = ""
     for piece in payload_pieces:
-        string += piece.string
+        if piece.piece_type == "text":
+            string += piece.string
+        elif piece.piece_type == "message":
+            # recursive!
+            string += flatten_eddy(piece.gpg_data.plainobj)
 
     return string
 
