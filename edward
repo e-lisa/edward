@@ -155,24 +155,11 @@ def parse_mime(msg_struct):
     return eddy_obj
 
 
-def split_payloads (eddy_obj):
-
-    if eddy_obj.multipart == True:
-        eddy_obj.subparts = list(map(split_payloads, eddy_obj.subparts))
-
-    else:
-        for (match_type, pattern) in match_types:
-
-            new_pieces_list = []
-            for payload_piece in eddy_obj.payload_pieces:
-                new_pieces_list += scan_and_split(payload_piece,
-                    match_type, pattern)
-            eddy_obj.payload_pieces = new_pieces_list
-
-    return eddy_obj
-
-
 def scan_and_split (payload_piece, match_type, pattern):
+
+    # don't try to re-split pieces containing gpg data
+    if payload_piece.piece_type != "text":
+        return [payload_piece]
 
     flags = re.DOTALL | re.MULTILINE
     matches = re.search("(?P<beginning>.*?)(?P<match>" + pattern +
@@ -236,9 +223,28 @@ def do_to_eddys_pieces (function_to_do, eddy_obj, data):
         for sub in eddy_obj.subparts:
             result_list += do_to_eddys_pieces(function_to_do, sub, data)
     else:
-        result_list = [function_to_do(eddy_obj.payload_pieces, data)]
+        result_list = [function_to_do(eddy_obj, data)]
 
     return result_list
+
+
+def split_payloads (eddy_obj):
+
+    for match_type in match_types:
+        do_to_eddys_pieces(split_payload_pieces, eddy_obj, match_type)
+
+    return eddy_obj
+
+
+def split_payload_pieces (eddy_obj, match_type):
+
+    (match_name, pattern) = match_type
+
+    new_pieces_list = []
+    for piece in eddy_obj.payload_pieces:
+        new_pieces_list += scan_and_split(piece, match_name, pattern)
+
+    eddy_obj.payload_pieces = new_pieces_list
 
 
 def decrypt_payloads (eddy_obj, gpgme_ctx):
@@ -248,9 +254,9 @@ def decrypt_payloads (eddy_obj, gpgme_ctx):
     return eddy_obj
 
 
-def decrypt_payload_pieces (payload_pieces, gpgme_ctx):
+def decrypt_payload_pieces (eddy_obj, gpgme_ctx):
 
-    for piece in payload_pieces:
+    for piece in eddy_obj.payload_pieces:
 
         if piece.piece_type == "text":
             # don't transform the plaintext.
@@ -275,10 +281,10 @@ def flatten_eddy (eddy_obj):
     return string
 
 
-def flatten_payload_pieces (payload_pieces, _ignore):
+def flatten_payload_pieces (eddy_obj, _ignore):
 
     string = ""
-    for piece in payload_pieces:
+    for piece in eddy_obj.payload_pieces:
         if piece.piece_type == "text":
             string += piece.string
         elif piece.piece_type == "message":
