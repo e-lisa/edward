@@ -137,7 +137,8 @@ def parse_mime(msg_struct):
         payloads = msg_struct.get_payload()
 
         eddy_obj.multipart = True
-        eddy_obj.subparts = map(parse_mime, payloads)
+        eddy_obj.subparts = list(map(parse_mime, payloads))
+
     else:
         eddy_obj = get_subpart_data(msg_struct)
 
@@ -147,7 +148,7 @@ def parse_mime(msg_struct):
 def split_payloads (eddy_obj):
 
     if eddy_obj.multipart == True:
-        eddy_obj.subparts = map(split_payloads, eddy_obj.subparts)
+        eddy_obj.subparts = list(map(split_payloads, eddy_obj.subparts))
 
     else:
         for (match_type, pattern) in match_types:
@@ -222,17 +223,26 @@ def get_subpart_data (part):
     return obj
 
 
-def flatten_eddy (eddy_obj):
+def do_to_eddys_pieces (function_to_do, eddy_obj, data):
 
     if eddy_obj.multipart == True:
-        string = "\n".join(map(flatten_eddy, eddy_obj.subparts))
+        result_list = []
+        for sub in eddy_obj.subparts:
+            result_list += do_to_eddys_pieces(function_to_do, sub, data)
     else:
-        string = flatten_payload_piece(eddy_obj.payload_pieces)
+        result_list = [function_to_do(eddy_obj.payload_pieces, data)]
+
+    return result_list
+
+
+def flatten_eddy (eddy_obj):
+
+    string = "\n".join(do_to_eddys_pieces(flatten_payload_pieces, eddy_obj, None))
 
     return string
 
 
-def flatten_payload_piece (payload_pieces):
+def flatten_payload_pieces (payload_pieces, _ignore):
 
     string = ""
     for piece in payload_pieces:
