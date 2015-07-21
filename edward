@@ -210,12 +210,14 @@ def get_subpart_data (part):
         obj.charset = 'utf-8'
 
     if obj.payload_bytes != None:
-        # this belongs in a specific try statement.
-        payload = PayloadPiece()
-        payload.string = obj.payload_bytes.decode(obj.charset)
-        payload.piece_type = 'text'
+        try:
+            payload = PayloadPiece()
+            payload.string = obj.payload_bytes.decode(obj.charset)
+            payload.piece_type = 'text'
 
-        obj.payload_pieces = [payload]
+            obj.payload_pieces = [payload]
+        except UnicodeDecodeError:
+            pass
 
     return obj
 
