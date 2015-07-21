@@ -326,33 +326,6 @@ def add_gpg_keys (text, gpgme_ctx):
     return fingerprints
 
 
-def decrypt_text (gpg_text, gpgme_ctx):
-
-    body = ""
-    fingerprints = []
-
-    msg_blocks = scan_and_grab(gpg_text,
-                               '-----BEGIN PGP MESSAGE-----',
-                               '-----END PGP MESSAGE-----')
-
-    plaintexts_and_sigs = decrypt_blocks(msg_blocks, gpgme_ctx)
-
-    for pair in plaintexts_and_sigs:
-        plaintext   = pair[0]
-        sigs        = pair[1]
-
-        for sig in sigs:
-            fingerprints += [sig.fpr]
-
-        # recursive for nested layers of mime and/or gpg
-        plaintext, more_fps = email_decode_flatten(plaintext, gpgme_ctx, True)
-
-        body += plaintext
-        fingerprints += more_fps
-
-    return body, fingerprints
-
-
 def verify_clear_signature (text, gpgme_ctx):
 
     sig_blocks = scan_and_grab(text,
@@ -374,24 +347,6 @@ def verify_clear_signature (text, gpgme_ctx):
         fingerprints += [fingerprint]
 
     return plaintext, fingerprints
-
-
-def scan_and_grab (text, start_text, end_text):
-
-    matches = re.search('(' + start_text + '.*' + end_text + ')',
-                        text, flags=re.DOTALL)
-
-    if matches != None:
-        match_tuple = matches.groups()
-    else:
-        match_tuple = ()
-
-    return match_tuple
-
-
-def decrypt_blocks (msg_blocks, gpgme_ctx):
-
-    return [decrypt_block(block, gpgme_ctx) for block in msg_blocks]
 
 
 def decrypt_block (msg_block, gpgme_ctx):
