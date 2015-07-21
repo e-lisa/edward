@@ -493,7 +493,7 @@ def encrypt_sign_message (plaintext, encrypt_to_key, gpgme_ctx):
 
 def error (error_msg):
 
-    sys.stderr.write(progname + ": " + error_msg + "\n")
+    sys.stderr.write(progname + ": " + str(error_msg) + "\n")
 
 
 def debug (debug_msg):
