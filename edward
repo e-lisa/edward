@@ -270,12 +270,22 @@ def gpg_on_payload_pieces (eddy_obj, gpgme_ctx):
                 piece.gpg_data.sigs = sigs
                 # recurse!
                 piece.gpg_data.plainobj = parse_pgp_mime(plaintext, gpgme_ctx)
+
         elif piece.piece_type == "pubkey":
             fingerprints = add_gpg_key(piece.string, gpgme_ctx)
 
             if fingerprints != []:
                 piece.gpg_data = GPGData()
                 piece.gpg_data.keys = fingerprints
+
+        elif piece.piece_type == "clearsign":
+            (plaintext, fingerprints) = verify_clear_signature(piece.string, gpgme_ctx)
+
+            if fingerprints != []:
+                piece.gpg_data = GPGData()
+                piece.gpg_data.sigs = fingerprints
+                piece.gpg_data.plainobj = parse_pgp_mime(plaintext, gpgme_ctx)
+
         else:
             pass
 
@@ -300,6 +310,10 @@ def flatten_payload_pieces (eddy_obj, _ignore):
             string += "thanks for your public key:"
             for key in piece.gpg_data.keys:
                 string += "\n" + key
+        elif piece.piece_type == "clearsign":
+            string += "*** Begin signed part ***\n"
+            string += flatten_eddy(piece.gpg_data.plainobj)
+            string += "\n*** End signed part ***"
 
     return string
 
@@ -333,25 +347,21 @@ def add_gpg_key (key_block, gpgme_ctx):
     return fingerprints
 
 
-def verify_clear_signature (text, gpgme_ctx):
+def verify_clear_signature (sig_block, gpgme_ctx):
 
-    sig_blocks = scan_and_grab(text,
-                               '-----BEGIN PGP SIGNED MESSAGE-----',
-                               '-----END PGP SIGNATURE-----')
+    # FIXME: this might require the un-decoded bytes
+    # or the correct re-encoding with the carset of the mime part.
+    msg_fp = io.BytesIO(sig_block.encode('utf-8'))
+    ptxt_fp = io.BytesIO()
+
+    result = gpgme_ctx.verify(msg_fp, None, ptxt_fp)
+
+    # FIXME: this might require using the charset of the mime part.
+    plaintext = ptxt_fp.getvalue().decode('utf-8')
 
     fingerprints = []
-    plaintext = ""
-
-    for sig_block in sig_blocks:
-        msg_fp = io.BytesIO(sig_block.encode('utf-8'))
-        ptxt_fp = io.BytesIO()
-
-        result = gpgme_ctx.verify(msg_fp, None, ptxt_fp)
-
-        plaintext += ptxt_fp.getvalue().decode('utf-8')
-        fingerprint = result[0].fpr
-
-        fingerprints += [fingerprint]
+    for res_ in result:
+        fingerprints += [res_.fpr]
 
     return plaintext, fingerprints
 
