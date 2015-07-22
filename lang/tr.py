@@ -21,7 +21,7 @@
 *********************************************************************"""
 
 replies = {
-    'success_decrypt' : "Merhaba, Ben Edward, arkadaş canlısı GnuPG botu. Mesajınızı aldım ve şifresini çözerek düz metine çevirdim. Mesajınızın düz metin kopyası şudur:\n\n%s",
+    'success_decrypt' : "Merhaba, Ben Edward, arkadaş canlısı GnuPG botu. Mesajınızı aldım ve şifresini çözerek düz metine çevirdim. Mesajınızın düz metin kopyası şudur:\n\n",
     'public_key_received' : 'Açık anahtarınızı aldım. Teşekkürler.',
     'failed_decrypt' : "Özür dilerim, mesajınızı çözmeyi ve düz metine çevirmeyi başaramadım. Benim açık anahtarımla şifrelediğinize emin misiniz?",
     'no_public_key' : "Özür dilerim, açık anahtarınızı bulamadım. E-postaya eklemeyi unutmadınız, değil mi?",

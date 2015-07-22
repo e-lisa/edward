@@ -21,7 +21,7 @@
 *********************************************************************"""
 
 replies = {
-    'success_decrypt': " Bonjour, je suis Edward, le gentil robot de GnuPG. J'ai bien reçu votre message et l'ai déchiffré. En voici une copie: \n\n%s",
+    'success_decrypt': " Bonjour, je suis Edward, le gentil robot de GnuPG. J'ai bien reçu votre message et l'ai déchiffré. En voici une copie: \n\n",
     'public_key_received' : "J'ai bien reçu votre clef publique. Merci.",
     'failed_decrypt' : "Je n'ai pas été en mesure de déchiffrer votre message, désolé. L'avez-vous bien chiffré avec ma clef publique ?",
     'no_public_key' : "Je n'ai pas pu trouver votre clef publique, désolé. Avez-vous oublié de la joindre ?",
