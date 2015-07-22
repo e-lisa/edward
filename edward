@@ -36,6 +36,7 @@ import gpgme
 import re
 import io
 import os
+import importlib
 
 import email.parser
 import email.message
@@ -46,6 +47,8 @@ from email.mime.application     import MIMEApplication
 from email.mime.nonmultipart    import MIMENonMultipart
 
 import edward_config
+
+langs = ["an", "de", "el", "en", "fr", "ja", "pt-br", "ro", "ru", "tr"]
 
 match_types =  [('clearsign',
                 '-----BEGIN PGP SIGNED MESSAGE-----.*?-----BEGIN PGP SIGNATURE-----.*?-----END PGP SIGNATURE-----'),
@@ -95,10 +98,15 @@ def main ():
                               edward_config.sign_with_key)
 
     email_text = sys.stdin.read()
-    result = parse_pgp_mime(email_text, gpgme_ctx)
-    email_from, email_subject = email_from_subject(email_text)
+    email_struct = parse_pgp_mime(email_text, gpgme_ctx)
 
-    print(flatten_eddy(result))
+    email_to, email_from, email_subject = email_to_from_subject(email_text)
+    lang = import_lang(email_to)
+
+    reply_plaintext = build_reply(email_struct)
+
+    debug(lang.replies['success_decrypt'])
+    print(reply_plaintext)
 
 #    encrypt_to_key = choose_reply_encryption_key(gpgme_ctx, fingerprints)
 #
@@ -291,14 +299,14 @@ def gpg_on_payload_pieces (eddy_obj, gpgme_ctx):
             pass
 
 
-def flatten_eddy (eddy_obj):
+def build_reply (eddy_obj):
 
-    string = "\n".join(do_to_eddys_pieces(flatten_payload_pieces, eddy_obj, None))
+    string = "\n".join(do_to_eddys_pieces(build_reply_pieces, eddy_obj, None))
 
     return string
 
 
-def flatten_payload_pieces (eddy_obj, _ignore):
+def build_reply_pieces (eddy_obj, _ignore):
 
     string = ""
     for piece in eddy_obj.payload_pieces:
@@ -308,14 +316,14 @@ def flatten_payload_pieces (eddy_obj, _ignore):
             string += "Hmmm... I wasn't able to get that part.\n"
         elif piece.piece_type == "message":
             # recursive!
-            string += flatten_eddy(piece.gpg_data.plainobj)
+            string += build_reply(piece.gpg_data.plainobj)
         elif piece.piece_type == "pubkey":
             string += "thanks for your public key:"
             for key in piece.gpg_data.keys:
                 string += "\n" + key
         elif piece.piece_type == "clearsign":
             string += "*** Begin signed part ***\n"
-            string += flatten_eddy(piece.gpg_data.plainobj)
+            string += build_reply(piece.gpg_data.plainobj)
             string += "\n*** End signed part ***"
 
     return string
@@ -399,6 +407,18 @@ def email_to_from_subject (email_text):
     email_subject   = email_struct['Subject']
 
     return email_to, email_from, email_subject
+
+
+def import_lang(email_to):
+
+    for lang in langs:
+        if "edward-" + lang in email_to:
+            lang = "lang." + re.sub('-', '_', lang)
+            language = importlib.import_module(lang)
+
+            return language
+
+    return importlib.import_module("lang.en")
 
 
 def generate_encrypted_mime (plaintext, email_from, email_subject, encrypt_to_key,
