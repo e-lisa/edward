@@ -139,8 +139,8 @@ def parse_pgp_mime (email_text, gpgme_ctx):
     email_struct = email.parser.Parser().parsestr(email_text)
 
     eddy_obj = parse_mime(email_struct)
-    eddy_obj = split_payloads(eddy_obj)
-    eddy_obj = gpg_on_payloads(eddy_obj, gpgme_ctx)
+    split_payloads(eddy_obj)
+    gpg_on_payloads(eddy_obj, gpgme_ctx)
 
     return eddy_obj
 
@@ -242,8 +242,6 @@ def split_payloads (eddy_obj):
     for match_type in match_types:
         do_to_eddys_pieces(split_payload_pieces, eddy_obj, match_type)
 
-    return eddy_obj
-
 
 def split_payload_pieces (eddy_obj, match_type):
 
@@ -259,8 +257,6 @@ def split_payload_pieces (eddy_obj, match_type):
 def gpg_on_payloads (eddy_obj, gpgme_ctx):
 
     do_to_eddys_pieces(gpg_on_payload_pieces, eddy_obj, gpgme_ctx)
-
-    return eddy_obj
 
 
 def gpg_on_payload_pieces (eddy_obj, gpgme_ctx):
