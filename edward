@@ -321,16 +321,6 @@ def flatten_payload_pieces (eddy_obj, _ignore):
     return string
 
 
-def email_from_subject (email_text):
-
-    email_struct = email.parser.Parser().parsestr(email_text)
-
-    email_from      = email_struct['From']
-    email_subject   = email_struct['Subject']
-
-    return email_from, email_subject
-
-
 def add_gpg_key (key_block, gpgme_ctx):
 
     fp = io.BytesIO(key_block.encode('ascii'))
@@ -398,6 +388,17 @@ def choose_reply_encryption_key (gpgme_ctx, fingerprints):
 
 
     return reply_key
+
+
+def email_to_from_subject (email_text):
+
+    email_struct = email.parser.Parser().parsestr(email_text)
+
+    email_to        = email_struct['To']
+    email_from      = email_struct['From']
+    email_subject   = email_struct['Subject']
+
+    return email_to, email_from, email_subject
 
 
 def generate_encrypted_mime (plaintext, email_from, email_subject, encrypt_to_key,
