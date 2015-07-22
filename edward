@@ -224,9 +224,6 @@ def get_subpart_data (part):
 
 def do_to_eddys_pieces (function_to_do, eddy_obj, data):
 
-    if eddy_obj == None:
-        return []
-
     if eddy_obj.multipart == True:
         result_list = []
         for sub in eddy_obj.subparts:
