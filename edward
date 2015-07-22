@@ -122,7 +122,7 @@ def main ():
     replyinfo_obj.replies = lang.replies
 
     prepare_for_reply(email_struct, replyinfo_obj)
-
+    encrypt_to_key = get_key_from_fp(replyinfo_obj, gpgme_ctx)
     reply_plaintext = write_reply(replyinfo_obj)
 
     print(reply_plaintext)
@@ -327,6 +327,12 @@ def prepare_for_reply (eddymsg_obj, replyinfo_obj):
 
     do_to_eddys_pieces(prepare_for_reply_pieces, eddymsg_obj, replyinfo_obj)
 
+    if replyinfo_obj.target_key == None:
+        replyinfo_obj.target_key = replyinfo_obj.fallback_target_key
+
+    if replyinfo_obj.target_key == None:
+        replyinfo_obj.no_public_key = True
+
 
 def prepare_for_reply_pieces (eddymsg_obj, replyinfo_obj):
 
@@ -394,6 +400,26 @@ def flatten_payloads (eddymsg_obj):
 
 
     return flat_string
+
+
+def get_key_from_fp (replyinfo_obj, gpgme_ctx):
+
+    if replyinfo_obj.target_key != None:
+        try:
+            encrypt_to_key = gpgme_ctx.get_key(replyinfo_obj.target_key)
+            return encrypt_to_key
+
+        except:
+            pass
+
+    # no available key to use
+    replyinfo_obj.target_key = None
+    replyinfo_obj.fallback_target_key = None
+
+    replyinfo_obj.no_public_key = True
+    replyinfo_obj.public_key_received = False
+
+    return None
 
 
 def write_reply (replyinfo_obj):
