@@ -102,9 +102,9 @@ def main ():
 
 #    encrypt_to_key = choose_reply_encryption_key(gpgme_ctx, fingerprints)
 #
-#    reply_message = generate_reply(plaintext, email_from, \
-#                                   email_subject, encrypt_to_key,
-#                                   gpgme_ctx)
+#    reply_mime = generate_encrypted_mime(plaintext, email_from, \
+#                                         email_subject, encrypt_to_key,
+#                                         gpgme_ctx)
 
 
 def get_gpg_context (gnupghome, sign_with_key_fp):
@@ -400,7 +400,7 @@ def choose_reply_encryption_key (gpgme_ctx, fingerprints):
     return reply_key
 
 
-def generate_reply (plaintext, email_from, email_subject, encrypt_to_key,
+def generate_encrypted_mime (plaintext, email_from, email_subject, encrypt_to_key,
                     gpgme_ctx):
 
 
