@@ -153,27 +153,27 @@ def parse_pgp_mime (email_text, gpgme_ctx):
 
     email_struct = email.parser.Parser().parsestr(email_text)
 
-    eddy_obj = parse_mime(email_struct)
-    split_payloads(eddy_obj)
-    gpg_on_payloads(eddy_obj, gpgme_ctx)
+    eddymsg_obj = parse_mime(email_struct)
+    split_payloads(eddymsg_obj)
+    gpg_on_payloads(eddymsg_obj, gpgme_ctx)
 
-    return eddy_obj
+    return eddymsg_obj
 
 
 def parse_mime(msg_struct):
 
-    eddy_obj = EddyMsg()
+    eddymsg_obj = EddyMsg()
 
     if msg_struct.is_multipart() == True:
         payloads = msg_struct.get_payload()
 
-        eddy_obj.multipart = True
-        eddy_obj.subparts = list(map(parse_mime, payloads))
+        eddymsg_obj.multipart = True
+        eddymsg_obj.subparts = list(map(parse_mime, payloads))
 
     else:
-        eddy_obj = get_subpart_data(msg_struct)
+        eddymsg_obj = get_subpart_data(msg_struct)
 
-    return eddy_obj
+    return eddymsg_obj
 
 
 def scan_and_split (payload_piece, match_type, pattern):
@@ -237,43 +237,43 @@ def get_subpart_data (part):
     return obj
 
 
-def do_to_eddys_pieces (function_to_do, eddy_obj, data):
+def do_to_eddys_pieces (function_to_do, eddymsg_obj, data):
 
-    if eddy_obj.multipart == True:
-        for sub in eddy_obj.subparts:
+    if eddymsg_obj.multipart == True:
+        for sub in eddymsg_obj.subparts:
             do_to_eddys_pieces(function_to_do, sub, data)
     else:
-        function_to_do(eddy_obj, data)
+        function_to_do(eddymsg_obj, data)
 
 
-def split_payloads (eddy_obj):
+def split_payloads (eddymsg_obj):
 
     for match_type in match_types:
-        do_to_eddys_pieces(split_payload_pieces, eddy_obj, match_type)
+        do_to_eddys_pieces(split_payload_pieces, eddymsg_obj, match_type)
 
 
-def split_payload_pieces (eddy_obj, match_type):
+def split_payload_pieces (eddymsg_obj, match_type):
 
     (match_name, pattern) = match_type
 
     new_pieces_list = []
-    for piece in eddy_obj.payload_pieces:
+    for piece in eddymsg_obj.payload_pieces:
         new_pieces_list += scan_and_split(piece, match_name, pattern)
 
-    eddy_obj.payload_pieces = new_pieces_list
+    eddymsg_obj.payload_pieces = new_pieces_list
 
 
-def gpg_on_payloads (eddy_obj, gpgme_ctx, prev_parts=[]):
+def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
 
-    if eddy_obj.multipart == True:
+    if eddymsg_obj.multipart == True:
         prev_parts=[]
-        for sub in eddy_obj.subparts:
+        for sub in eddymsg_obj.subparts:
             gpg_on_payloads (sub, gpgme_ctx, prev_parts)
             prev_parts += [sub]
 
         return
 
-    for piece in eddy_obj.payload_pieces:
+    for piece in eddymsg_obj.payload_pieces:
 
         if piece.piece_type == "text":
             # don't transform the plaintext.
@@ -317,14 +317,14 @@ def gpg_on_payloads (eddy_obj, gpgme_ctx, prev_parts=[]):
             pass
 
 
-def prepare_for_reply (eddy_obj, replyinfo_obj):
+def prepare_for_reply (eddymsg_obj, replyinfo_obj):
 
-    do_to_eddys_pieces(prepare_for_reply_pieces, eddy_obj, replyinfo_obj)
+    do_to_eddys_pieces(prepare_for_reply_pieces, eddymsg_obj, replyinfo_obj)
 
 
-def prepare_for_reply_pieces (eddy_obj, replyinfo_obj):
+def prepare_for_reply_pieces (eddymsg_obj, replyinfo_obj):
 
-    for piece in eddy_obj.payload_pieces:
+    for piece in eddymsg_obj.payload_pieces:
         if piece.piece_type == "text":
             # don't quote the plaintext part.
             pass
@@ -353,17 +353,17 @@ def prepare_for_reply_pieces (eddy_obj, replyinfo_obj):
                 replyinfo_obj.sig_success = True
 
 
-def flatten_payloads (eddy_obj):
+def flatten_payloads (eddymsg_obj):
 
     flat_string = ""
 
-    if eddy_obj.multipart == True:
-        for sub in eddy_obj.subparts:
+    if eddymsg_obj.multipart == True:
+        for sub in eddymsg_obj.subparts:
             flat_string += flatten_payloads (sub)
 
         return flat_string
 
-    for piece in eddy_obj.payload_pieces:
+    for piece in eddymsg_obj.payload_pieces:
         if piece.piece_type == "text":
             flat_string += piece.string
 
