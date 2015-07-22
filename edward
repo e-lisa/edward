@@ -411,12 +411,13 @@ def email_to_from_subject (email_text):
 
 def import_lang(email_to):
 
-    for lang in langs:
-        if "edward-" + lang in email_to:
-            lang = "lang." + re.sub('-', '_', lang)
-            language = importlib.import_module(lang)
+    if email_to != None:
+        for lang in langs:
+            if "edward-" + lang in email_to:
+                lang = "lang." + re.sub('-', '_', lang)
+                language = importlib.import_module(lang)
 
-            return language
+                return language
 
     return importlib.import_module("lang.en")
 
