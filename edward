@@ -89,6 +89,18 @@ class GPGData (object):
         self.sigs               = []
         self.keys               = []
 
+class ReplyInfo (object):
+    def __init__(self):
+        self.replies                = None
+        self.msg_to_quote           = ""
+
+        self.success_decrypt        = False
+        self.failed_decrypt         = False
+        self.public_key_received    = False
+        self.no_public_key          = False
+        self.sig_success            = False
+        self.sig_failure            = False
+
 
 def main ():
 
@@ -103,9 +115,12 @@ def main ():
     email_to, email_from, email_subject = email_to_from_subject(email_text)
     lang = import_lang(email_to)
 
-    reply_plaintext = build_reply(email_struct)
+    replyinfo_obj = ReplyInfo()
+    replyinfo_obj.replies = lang.replies
 
-    debug(lang.replies['success_decrypt'])
+    prepare_for_reply(email_struct, replyinfo_obj)
+    reply_plaintext = write_reply(replyinfo_obj)
+
     print(reply_plaintext)
 
 #    encrypt_to_key = choose_reply_encryption_key(gpgme_ctx, fingerprints)
@@ -225,13 +240,10 @@ def get_subpart_data (part):
 def do_to_eddys_pieces (function_to_do, eddy_obj, data):
 
     if eddy_obj.multipart == True:
-        result_list = []
         for sub in eddy_obj.subparts:
-            result_list += do_to_eddys_pieces(function_to_do, sub, data)
+            do_to_eddys_pieces(function_to_do, sub, data)
     else:
-        result_list = [function_to_do(eddy_obj, data)]
-
-    return result_list
+        function_to_do(eddy_obj, data)
 
 
 def split_payloads (eddy_obj):
@@ -259,6 +271,7 @@ def gpg_on_payloads (eddy_obj, gpgme_ctx, prev_parts=[]):
             gpg_on_payloads (sub, gpgme_ctx, prev_parts)
             prev_parts += [sub]
 
+        return
 
     for piece in eddy_obj.payload_pieces:
 
@@ -304,38 +317,94 @@ def gpg_on_payloads (eddy_obj, gpgme_ctx, prev_parts=[]):
             pass
 
 
-def build_reply (eddy_obj):
+def prepare_for_reply (eddy_obj, replyinfo_obj):
 
-    string = "\n".join(do_to_eddys_pieces(build_reply_pieces, eddy_obj, None))
-
-    return string
+    do_to_eddys_pieces(prepare_for_reply_pieces, eddy_obj, replyinfo_obj)
 
 
-def build_reply_pieces (eddy_obj, _ignore):
+def prepare_for_reply_pieces (eddy_obj, replyinfo_obj):
 
-    string = ""
     for piece in eddy_obj.payload_pieces:
         if piece.piece_type == "text":
-            string += piece.string
-        elif piece.gpg_data == None:
-            string += "Hmmm... I wasn't able to get that part.\n"
-        elif piece.piece_type == "message":
-            # recursive!
-            string += build_reply(piece.gpg_data.plainobj)
-        elif piece.piece_type == "pubkey":
-            string += "thanks for your public key:"
-            for key in piece.gpg_data.keys:
-                string += "\n" + key
-        elif piece.piece_type == "clearsign":
-            string += "*** Begin signed part ***\n"
-            string += build_reply(piece.gpg_data.plainobj)
-            string += "\n*** End signed part ***"
-        elif piece.piece_type == "detachedsig":
-            string += "*** Begin detached signed part ***\n"
-            string += build_reply(piece.gpg_data.plainobj)
-            string += "*** End detached signed part ***\n"
+            # don't quote the plaintext part.
+            pass
 
-    return string
+        elif piece.piece_type == "message":
+            if piece.gpg_data == None:
+                replyinfo_obj.failed_decrypt = True
+            else:
+                replyinfo_obj.success_decrypt = True
+                # TODO: only quote it if it is also signed by the encrypter.
+                replyinfo_obj.msg_to_quote += flatten_payloads(piece.gpg_data.plainobj)
+
+                prepare_for_reply(piece.gpg_data.plainobj, replyinfo_obj)
+
+        elif piece.piece_type == "pubkey":
+            if piece.gpg_data == None:
+                replyinfo_obj.no_public_key = True
+            else:
+                replyinfo_obj.public_key_received = True
+
+        elif (piece.piece_type == "clearsign") \
+                or (piece.piece_type == "detachedsig"):
+            if piece.gpg_data == None:
+                replyinfo_obj.sig_failure = True
+            else:
+                replyinfo_obj.sig_success = True
+
+
+def flatten_payloads (eddy_obj):
+
+    flat_string = ""
+
+    if eddy_obj.multipart == True:
+        for sub in eddy_obj.subparts:
+            flat_string += flatten_payloads (sub)
+
+        return flat_string
+
+    for piece in eddy_obj.payload_pieces:
+        if piece.piece_type == "text":
+            flat_string += piece.string
+
+    return flat_string
+
+
+def write_reply (replyinfo_obj):
+
+    reply_plain = ""
+
+    if replyinfo_obj.success_decrypt == True:
+        quoted_text = email_quote_text(replyinfo_obj.msg_to_quote)
+        reply_plain += replyinfo_obj.replies['success_decrypt']
+        reply_plain += quoted_text
+
+    elif replyinfo_obj.failed_decrypt == True:
+        reply_plain += replyinfo_obj.replies['failed_decrypt']
+
+
+    if replyinfo_obj.sig_success == True:
+        reply_plain += "\n\n"
+        reply_plain += replyinfo_obj.replies['sig_success']
+
+    elif replyinfo_obj.sig_failure == True:
+        reply_plain += "\n\n"
+        reply_plain += replyinfo_obj.replies['sig_failure']
+
+
+    if replyinfo_obj.public_key_received == True:
+        reply_plain += "\n\n"
+        reply_plain += replyinfo_obj.replies['public_key_received']
+
+    elif replyinfo_obj.no_public_key == True:
+        reply_plain += "\n\n"
+        reply_plain += replyinfo_obj.replies['no_public_key']
+
+
+    reply_plain += "\n\n"
+    reply_plain += replyinfo_obj.replies['signature']
+
+    return reply_plain
 
 
 def add_gpg_key (key_block, gpgme_ctx):
