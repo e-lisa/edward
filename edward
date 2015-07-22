@@ -288,6 +288,7 @@ def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
 
             if plaintext:
                 piece.gpg_data = GPGData()
+                piece.gpg_data.decrypted = True
                 piece.gpg_data.sigs = sigs
                 # recurse!
                 piece.gpg_data.plainobj = parse_pgp_mime(plaintext, gpgme_ctx)
