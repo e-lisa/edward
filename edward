@@ -92,6 +92,9 @@ class GPGData (object):
 class ReplyInfo (object):
     def __init__(self):
         self.replies                = None
+
+        self.target_key             = None
+        self.fallback_target_key    = None
         self.msg_to_quote           = ""
 
         self.success_decrypt        = False
@@ -119,12 +122,13 @@ def main ():
     replyinfo_obj.replies = lang.replies
 
     prepare_for_reply(email_struct, replyinfo_obj)
+
     reply_plaintext = write_reply(replyinfo_obj)
 
     print(reply_plaintext)
+    debug(replyinfo_obj.target_key)
+    debug(replyinfo_obj.fallback_target_key)
 
-#    encrypt_to_key = choose_reply_encryption_key(gpgme_ctx, fingerprints)
-#
 #    reply_mime = generate_encrypted_mime(plaintext, email_from, \
 #                                         email_subject, encrypt_to_key,
 #                                         gpgme_ctx)
@@ -335,9 +339,14 @@ def prepare_for_reply_pieces (eddymsg_obj, replyinfo_obj):
                 replyinfo_obj.failed_decrypt = True
             else:
                 replyinfo_obj.success_decrypt = True
-                # TODO: only quote it if it is also signed by the encrypter.
-                replyinfo_obj.msg_to_quote += flatten_payloads(piece.gpg_data.plainobj)
 
+                if replyinfo_obj.target_key != None:
+                    continue
+                if piece.gpg_data.sigs != []:
+                    replyinfo_obj.target_key = piece.gpg_data.sigs[0]
+                    replyinfo_obj.msg_to_quote = flatten_payloads(piece.gpg_data.plainobj)
+
+                # to catch public keys in encrypted blocks
                 prepare_for_reply(piece.gpg_data.plainobj, replyinfo_obj)
 
         elif piece.piece_type == "pubkey":
@@ -353,6 +362,10 @@ def prepare_for_reply_pieces (eddymsg_obj, replyinfo_obj):
             else:
                 replyinfo_obj.sig_success = True
 
+                if replyinfo_obj.target_key == None:
+                    replyinfo_obj.fallback_target_key = piece.gpg_data.sigs[0]
+
+
 
 def flatten_payloads (eddymsg_obj):
 
@@ -367,6 +380,7 @@ def flatten_payloads (eddymsg_obj):
 
         return flat_string
 
+    # todo: don't include nested decrypted messages.
     for piece in eddymsg_obj.payload_pieces:
         if piece.piece_type == "text":
             flat_string += piece.string
