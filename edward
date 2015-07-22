@@ -280,7 +280,7 @@ def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
             pass
 
         elif piece.piece_type == "message":
-            (plaintext, sigs) = decrypt_block (piece.string, gpgme_ctx)
+            (plaintext, sigs) = decrypt_block(piece.string, gpgme_ctx)
 
             if plaintext:
                 piece.gpg_data = GPGData()
@@ -313,6 +313,7 @@ def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
                     piece.gpg_data.sigs = sig_fps
                     piece.gpg_data.plainobj = prev
                     break
+
         else:
             pass
 
