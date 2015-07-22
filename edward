@@ -423,9 +423,11 @@ def write_reply (replyinfo_obj):
     reply_plain = ""
 
     if replyinfo_obj.success_decrypt == True:
-        quoted_text = email_quote_text(replyinfo_obj.msg_to_quote)
         reply_plain += replyinfo_obj.replies['success_decrypt']
-        reply_plain += quoted_text
+
+        if replyinfo_obj.no_public_key == False:
+            quoted_text = email_quote_text(replyinfo_obj.msg_to_quote)
+            reply_plain += quoted_text
 
     elif replyinfo_obj.failed_decrypt == True:
         reply_plain += replyinfo_obj.replies['failed_decrypt']
