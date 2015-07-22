@@ -481,7 +481,11 @@ def decrypt_block (msg_block, gpgme_ctx):
         return ("",[])
 
     plaintext = plain_b.getvalue().decode('utf-8')
-    return (plaintext, sigs)
+
+    fingerprints = []
+    for sig in sigs:
+        fingerprints += [sig.fpr]
+    return (plaintext, fingerprints)
 
 
 def choose_reply_encryption_key (gpgme_ctx, fingerprints):
