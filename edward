@@ -357,6 +357,9 @@ def flatten_payloads (eddymsg_obj):
 
     flat_string = ""
 
+    if eddymsg_obj == None:
+        return ""
+
     if eddymsg_obj.multipart == True:
         for sub in eddymsg_obj.subparts:
             flat_string += flatten_payloads (sub)
@@ -366,6 +369,13 @@ def flatten_payloads (eddymsg_obj):
     for piece in eddymsg_obj.payload_pieces:
         if piece.piece_type == "text":
             flat_string += piece.string
+        elif piece.piece_type == "message":
+            flat_string += flatten_payloads(piece.plainobj)
+        elif ((piece.piece_type == "clearsign") \
+                or (piece.piece_type == "detachedsig")) \
+                and (piece.gpg_data != None):
+                    flat_string += flatten_payloads (piece.gpg_data.plainobj)
+
 
     return flat_string
 
