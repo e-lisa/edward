@@ -125,13 +125,12 @@ def main ():
     encrypt_to_key = get_key_from_fp(replyinfo_obj, gpgme_ctx)
     reply_plaintext = write_reply(replyinfo_obj)
 
-    print(reply_plaintext)
-    debug(replyinfo_obj.target_key)
-    debug(replyinfo_obj.fallback_target_key)
+    # TODO error handling for missing keys and setting .no_public_key
+    reply_mime = generate_encrypted_mime(reply_plaintext, email_from, \
+                                         email_subject, encrypt_to_key,
+                                         gpgme_ctx)
 
-#    reply_mime = generate_encrypted_mime(plaintext, email_from, \
-#                                         email_subject, encrypt_to_key,
-#                                         gpgme_ctx)
+    print(reply_mime)
 
 
 def get_gpg_context (gnupghome, sign_with_key_fp):
@@ -572,23 +571,17 @@ def import_lang(email_to):
 def generate_encrypted_mime (plaintext, email_from, email_subject, encrypt_to_key,
                     gpgme_ctx):
 
+    # quoted printable encoding lets most ascii characters look normal
+    # before the decrypted mime message is decoded.
+    char_set = email.charset.Charset("utf-8")
+    char_set.body_encoding = email.charset.QP
 
-    reply  = "To: " + email_from + "\n"
-    reply += "Subject: " + email_subject + "\n"
+    # MIMEText doesn't allow setting the text encoding
+    # so we use MIMENonMultipart.
+    plaintext_mime = MIMENonMultipart('text', 'plain')
+    plaintext_mime.set_payload(plaintext, charset=char_set)
 
     if (encrypt_to_key != None):
-        plaintext_reply  = "thanks for the message!\n\n\n"
-        plaintext_reply += email_quote_text(plaintext)
-
-        # quoted printable encoding lets most ascii characters look normal
-        # before the decrypted mime message is decoded.
-        char_set = email.charset.Charset("utf-8")
-        char_set.body_encoding = email.charset.QP
-
-        # MIMEText doesn't allow setting the text encoding
-        # so we use MIMENonMultipart.
-        plaintext_mime = MIMENonMultipart('text', 'plain')
-        plaintext_mime.set_payload(plaintext_reply, charset=char_set)
 
         encrypted_text = encrypt_sign_message(plaintext_mime.as_string(),
                                               encrypt_to_key,
@@ -612,12 +605,13 @@ def generate_encrypted_mime (plaintext, email_from, email_subject, encrypt_to_ke
         message_mime.attach(encoded_mime)
         message_mime['Content-Disposition'] = 'inline'
 
-        reply += message_mime.as_string()
-
     else:
-        reply += "\n"
-        reply += "Sorry, i couldn't find your key.\n"
-        reply += "I'll need that to encrypt a message to you."
+        message_mime = plaintext_mime
+
+    message_mime['To'] = email_from
+    message_mime['Subject'] = email_subject
+
+    reply = message_mime.as_string()
 
     return reply
 
