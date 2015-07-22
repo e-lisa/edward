@@ -293,12 +293,13 @@ def gpg_on_payloads (eddy_obj, gpgme_ctx, prev_parts=[]):
         elif piece.piece_type == "detachedsig":
             for prev in prev_parts:
                 payload_bytes = prev.payload_bytes
-            sig_fps = verify_detached_signature(piece.string, payload_bytes, gpgme_ctx)
+                sig_fps = verify_detached_signature(piece.string, payload_bytes, gpgme_ctx)
 
-            if sig_fps != []:
-                piece.gpg_data = GPGData()
-                piece.gpg_data.sigs = sig_fps
-                piece.gpg_data.plainobj = prev
+                if sig_fps != []:
+                    piece.gpg_data = GPGData()
+                    piece.gpg_data.sigs = sig_fps
+                    piece.gpg_data.plainobj = prev
+                    break
         else:
             pass
 
