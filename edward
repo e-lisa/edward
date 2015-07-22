@@ -251,12 +251,14 @@ def split_payload_pieces (eddy_obj, match_type):
     eddy_obj.payload_pieces = new_pieces_list
 
 
-def gpg_on_payloads (eddy_obj, gpgme_ctx):
+def gpg_on_payloads (eddy_obj, gpgme_ctx, prev_parts=[]):
 
-    do_to_eddys_pieces(gpg_on_payload_pieces, eddy_obj, gpgme_ctx)
+    if eddy_obj.multipart == True:
+        prev_parts=[]
+        for sub in eddy_obj.subparts:
+            gpg_on_payloads (sub, gpgme_ctx, prev_parts)
+            prev_parts += [sub]
 
-
-def gpg_on_payload_pieces (eddy_obj, gpgme_ctx):
 
     for piece in eddy_obj.payload_pieces:
 
@@ -288,6 +290,15 @@ def gpg_on_payload_pieces (eddy_obj, gpgme_ctx):
                 piece.gpg_data.sigs = fingerprints
                 piece.gpg_data.plainobj = parse_pgp_mime(plaintext, gpgme_ctx)
 
+        elif piece.piece_type == "detachedsig":
+            for prev in prev_parts:
+                payload_bytes = prev.payload_bytes
+            sigs_fps = verify_detached_signature(piece.string, payload_bytes, gpgme_ctx)
+
+            if sigs_fps != []:
+                piece.gpg_data = GPGData()
+                piece.gpg_data.sigs = sigs_fps
+                piece.gpg_data.plainobj = prev
         else:
             pass
 
@@ -318,6 +329,10 @@ def build_reply_pieces (eddy_obj, _ignore):
             string += "*** Begin signed part ***\n"
             string += build_reply(piece.gpg_data.plainobj)
             string += "\n*** End signed part ***"
+        elif piece.piece_type == "detachedsig":
+            string += "*** Begin detached signed part ***\n"
+            string += build_reply(piece.gpg_data.plainobj)
+            string += "*** End detached signed part ***\n"
 
     return string
 
@@ -358,6 +373,21 @@ def verify_clear_signature (sig_block, gpgme_ctx):
         fingerprints += [res_.fpr]
 
     return plaintext, fingerprints
+
+
+def verify_detached_signature (detached_sig, plaintext_bytes, gpgme_ctx):
+
+    detached_sig_fp = io.BytesIO(detached_sig.encode('ascii'))
+    plaintext_fp = io.BytesIO(plaintext_bytes)
+    ptxt_fp = io.BytesIO()
+
+    result = gpgme_ctx.verify(detached_sig_fp, plaintext_fp, None)
+
+    sig_fingerprints = []
+    for res_ in result:
+        sig_fingerprints += [res_.fpr]
+
+    return sig_fingerprints
 
 
 def decrypt_block (msg_block, gpgme_ctx):
