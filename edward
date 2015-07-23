@@ -290,6 +290,17 @@ def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
                 piece.gpg_data.sigs = sigs
                 # recurse!
                 piece.gpg_data.plainobj = parse_pgp_mime(plaintext, gpgme_ctx)
+                continue
+
+            # if not encrypted, check to see if this is an armored signature.
+            (plaintext, sigs) = verify_sig_message(piece.string, gpgme_ctx)
+
+            if plaintext:
+                piece.piece_type = "signature"
+                piece.gpg_data = GPGData()
+                piece.gpg_data.sigs = sigs
+                # recurse!
+                piece.gpg_data.plainobj = parse_pgp_mime(plaintext, gpgme_ctx)
 
         elif piece.piece_type == "pubkey":
             key_fps = add_gpg_key(piece.string, gpgme_ctx)
@@ -339,7 +350,8 @@ def prepare_for_reply_pieces (eddymsg_obj, replyinfo_obj):
             prepare_for_reply_pubkey(piece, replyinfo_obj)
 
         elif (piece.piece_type == "clearsign") \
-            or (piece.piece_type == "detachedsig"):
+            or (piece.piece_type == "detachedsig") \
+            or (piece.piece_type == "signature"):
                     prepare_for_reply_sig(piece, replyinfo_obj)
 
 
@@ -421,7 +433,8 @@ def flatten_decrypted_payloads (eddymsg_obj, get_signed_part):
                         flat_string += flatten_decrypted_payloads(piece.gpg_data.plainobj, get_signed_part)
 
             elif ((piece.piece_type == "clearsign") \
-                    or (piece.piece_type == "detachedsig")) \
+                    or (piece.piece_type == "detachedsig") \
+                    or (piece.piece_type == "signature")) \
                     and (piece.gpg_data != None):
                         # FIXME: the key used to sign this message needs to be the one that is used for the encrypted reply.
                         flat_string += flatten_decrypted_payloads (piece.gpg_data.plainobj, get_signed_part)
@@ -508,6 +521,24 @@ def add_gpg_key (key_block, gpgme_ctx):
             debug("added gpg key: " + fingerprint)
 
     return key_fingerprints
+
+
+def verify_sig_message (msg_block, gpgme_ctx):
+
+    block_b = io.BytesIO(msg_block.encode('ascii'))
+    plain_b = io.BytesIO()
+
+    try:
+        sigs = gpgme_ctx.verify(block_b, None, plain_b)
+    except:
+        return ("",[])
+
+    plaintext = plain_b.getvalue().decode('utf-8')
+
+    fingerprints = []
+    for sig in sigs:
+        fingerprints += [sig.fpr]
+    return (plaintext, fingerprints)
 
 
 def verify_clear_signature (sig_block, gpgme_ctx):
