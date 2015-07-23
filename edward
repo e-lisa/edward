@@ -361,11 +361,7 @@ def prepare_for_reply_message (piece, replyinfo_obj):
         replyinfo_obj.failed_decrypt = True
         return
 
-    if piece.gpg_data.decrypted == False:
-        prepare_for_reply_sig(piece, replyinfo_obj)
-        return
-    else:
-        replyinfo_obj.success_decrypt = True
+    replyinfo_obj.success_decrypt = True
 
     # we already have a key (and a message)
     if replyinfo_obj.target_key != None:
