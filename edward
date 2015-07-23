@@ -354,6 +354,9 @@ def prepare_for_reply_pieces (eddymsg_obj, replyinfo_obj):
             else:
                 replyinfo_obj.public_key_received = True
 
+                if replyinfo_obj.fallback_target_key == None:
+                    replyinfo_obj.fallback_target_key = piece.gpg_data.keys[0]
+
         elif (piece.piece_type == "clearsign") \
                 or (piece.piece_type == "detachedsig"):
             if piece.gpg_data == None:
