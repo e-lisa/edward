@@ -1,0 +1,41 @@
+From: No One <noone@localhost>
+MIME-Version: 1.0
+To: No One <noone@localhost>
+Subject: test
+Content-Type: multipart/mixed;
+ boundary="------------050208050701010001050209"
+
+This is a multi-part message in MIME format.
+--------------050208050701010001050209
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+
+
+--------------050208050701010001050209
+Content-Type: application/octet-stream;
+ name="tmp.img"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="tmp.img"
+
+w8y/iYh2Y7J/wdlr6BpIx5tXTzXqfYKvAG2NBGAwqG3eOxwz8mR1x+Bmc40BOZAeTr+aCCan
+iOo7F+p2EqeOvMpWjKkct63PG6w+12ejkhF/UTo2vTifWDjDqFb7rJCnCRRKbN1blDt4xCWS
+vGHAOo5eKbEYFCbDrqZtgcTRtTAigZPEsABOK1LdsH2gHx8/pZ7sJGtyMCHhHenQPl2P8pdN
+B5WXuERYXTrNAR9CRQ86oZ02XZJ9QhFk3iBx+ddBlFOP3Bim0531iftD2lldjj95ZD/j8xF8
+su+s4Ej7prw0Z7GvKzdnOaVn8H5liOV2pIjUU641u6ZfuhSMdylncmNRSDvkmVJu3xETdpgV
+WNBSx1a73SEI+z+l80QbX3YFf/fc0tYiS/6JA9Qe4k4TmUFgXB7PYWao08akzCIEkpssr9Jg
+lc/erZojfU1EfoHW05ZophA8sZTB4NKa1pRViqAXy7SWGwxHXNNhwuYgcxZNTHsXjyqu1rcF
+7F3bLmZlWHDTBDkwg1XOppE6KLhvHZIgWbxq6xARsHbXjv94vYpGEx3XDxfQmu5LobJQEXrp
+vpMmFNQdOMyW4FVdf+Z3c/HRB0IOmArF1rdbE543MgRwFG6pzpIX0C1nLu9e7wODiFGIRdzW
+wSsViHnRIr+z1fP/ZjuJ4H2aBqqP8GkrDREufCoWccUmgIXa3mPv82PPWv+T86BrcwdjvIzm
+OO58TZ7tItMsxPtHB609FAtTRKX/4Xjv9dN/OBUp5FmhqReLpFmno/7weTvK4v+PtF7xb8JH
+EBiNyJkIEnr1KMTiAlxETGR8AhuVzFPn6I6SsK9mSEXz7XU5xNti4tm6+qbGFil9Bt/aQauS
+GgrlgN85kTxr+vRdKIPJZbUs2njZu+OHamf10hF39HZR7HXNdd0tWntJxGe/QLW3I156VfsK
+zuhtBw2iuFmkWWJKkO+qvIlNNCARQNKSfoh9z3t1ivpg7WZs3oG84VOUWXx0VfpSxCWo6kki
+HXlVzbmly+m+YL6zeSAobila5B3ipnl47MhlDfUtKXWs7FToPrY2O6CY08e8AIUzG/4cCuCM
+voCl2d60fjNPA/m3x9BuAERSXcROltF/CMkSdHniSiSyEEaWMlOC7wipeUa9ubwrP3/83irI
+V+SU5dtt1O1jqCBEqxEhngWhyKJp+YBQiTaitpUz59SjCdpmnw+euAKLyQjGg6dY9QCtuPqD
+sWmlZxXedry9GX3w7WC0g4J3B29YozW+IX2dI8VgIcg52xe0ohB4HJdmGbVQNyATDnJuM2L5
+r1y1sSpNCXTEuge0wwSGcbQaEZcxcqStYWiIOSbrxeKtZXk4GlEutC88IWOZstMuRdE72g==
+--------------050208050701010001050209--
+

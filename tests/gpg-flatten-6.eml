@@ -1,0 +1,43 @@
+From: No One <noone@localhost>
+MIME-Version: 1.0
+To: No One <edward-ja@localhost>
+Subject: =?UTF-8?B?44GT44KT44Gr44Gh44Gv44CB44GK5YWD5rCX44Gn44GZ44GL77yf?=
+Content-Type: multipart/encrypted;
+ protocol="application/pgp-encrypted";
+ boundary="x2iAciceo0NrKsl4uFVFGTgJ6k0ocg8FW"
+
+This is an OpenPGP/MIME encrypted message (RFC 4880 and 3156)
+--x2iAciceo0NrKsl4uFVFGTgJ6k0ocg8FW
+Content-Type: application/pgp-encrypted
+Content-Description: PGP/MIME version identification
+
+Version: 1
+
+--x2iAciceo0NrKsl4uFVFGTgJ6k0ocg8FW
+Content-Type: application/octet-stream; name="encrypted.asc"
+Content-Description: OpenPGP encrypted message
+Content-Disposition: inline; filename="encrypted.asc"
+
+-----BEGIN PGP MESSAGE-----
+Version: GnuPG v1
+
+hIwDWouAYlp2iv8BBAC+TPb/Fdoye+wORbVhPNslOQo829IK2nhRYkVcxouDoRQP
+M+q6vI0RMqwobFCqsyK6LIutS3JAqHIB7tsl//MN3hHUcIiF4ZgsyPpX+wazLMCp
+XFapg0WsuJjnBi5h0ugkpg/B4HuyiPYYIoH1wxCwp449MZzGHLmIMG02JlmiQtLp
+AV50UCk6OUoclVbJhpz6vttUxPPihTuVSTHGVJA25S3yF5Z2TTTosA5hwcEEN8/R
+fZ/cgYE88ewXcuo9/vYnXnQUGOzbEtFJ9g2wdnEpf0XzKgm60KcZCNXbDfHF9X9X
+BrimYlfjjaQ+vL7LEfEinhxZLbdu/yA5ej/colSP7IkefUVOE1J8mW2zmO5vNoRT
+mYj0T66+grP7ILPy+T68eY7pWaCoUWNqTQULyAfAyYpEmb6SBw/qtq0ZWVgAuIwM
++sA5vVgKDeb6+Rntesjs7YwIqKzp0LP/u/Dn+jp6D+3njltrkp/zhMUX2PL97CH7
+v9kZbwcxFFqjOvdtFn4bbHa+F1CjS6MakGDG8H609VtdL7vee7goaM9+PUCNYFur
+DOsEW0ML8a5gLNFzIScZTxsNwretctsJWu3TkVD+wY1UcqD/h4yIuKF7ZuJOGcW0
+CkxJ6U9OZsFgPzGqpLY3+Q/zb1Z0Tipex0FuKTw6gCpK9gieJKw04ZUFb7MuYPrj
+xSCY7ruJiHRz5Vby8a2uQMisjs8ajXtkzinfRRQe7vQd8WJGKBs5pUe+7kLgBhx+
+xI5oHuAQ3SkmdMjhFSQ7idgl+MV+7TVLBx96qdxfUhSw65uW2TySPkBpM1JDxU6A
+4hDENnhdBM6/o6JDbClGjVLCN1vgvBAZ8ToOShXOZ1AulZu2sazolhwzvEMzkQyH
+gURIeMRulCLM1ufflHaKzDFBOP24gK1Zl+B7g5BDvg==
+=Hetx
+-----END PGP MESSAGE-----
+
+--x2iAciceo0NrKsl4uFVFGTgJ6k0ocg8FW--
+
