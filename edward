@@ -125,7 +125,6 @@ def main ():
     encrypt_to_key = get_key_from_fp(replyinfo_obj, gpgme_ctx)
     reply_plaintext = write_reply(replyinfo_obj)
 
-    # TODO error handling for missing keys and setting .no_public_key
     reply_mime = generate_encrypted_mime(reply_plaintext, email_from, \
                                          email_subject, encrypt_to_key,
                                          gpgme_ctx)
