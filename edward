@@ -334,38 +334,65 @@ def prepare_for_reply_pieces (eddymsg_obj, replyinfo_obj):
             pass
 
         elif piece.piece_type == "message":
-            if piece.gpg_data == None:
-                replyinfo_obj.failed_decrypt = True
-            else:
-                replyinfo_obj.success_decrypt = True
-
-                if replyinfo_obj.target_key != None:
-                    continue
-                if piece.gpg_data.sigs != []:
-                    replyinfo_obj.target_key = piece.gpg_data.sigs[0]
-                    replyinfo_obj.msg_to_quote = flatten_payloads(piece.gpg_data.plainobj)
-
-                # to catch public keys in encrypted blocks
-                prepare_for_reply(piece.gpg_data.plainobj, replyinfo_obj)
+            prepare_for_reply_message(piece, replyinfo_obj)
 
         elif piece.piece_type == "pubkey":
-            if piece.gpg_data == None or piece.gpg_data.keys == []:
-                replyinfo_obj.no_public_key = True
-            else:
-                replyinfo_obj.public_key_received = True
-
-                if replyinfo_obj.fallback_target_key == None:
-                    replyinfo_obj.fallback_target_key = piece.gpg_data.keys[0]
+            prepare_for_reply_pubkey(piece, replyinfo_obj)
 
         elif (piece.piece_type == "clearsign") \
-                or (piece.piece_type == "detachedsig"):
-            if piece.gpg_data == None or piece.gpg_data.sigs == []:
-                replyinfo_obj.sig_failure = True
-            else:
-                replyinfo_obj.sig_success = True
+            or (piece.piece_type == "detachedsig"):
+                    prepare_for_reply_sig(piece, replyinfo_obj)
 
-                if replyinfo_obj.fallback_target_key == None:
-                    replyinfo_obj.fallback_target_key = piece.gpg_data.sigs[0]
+
+def prepare_for_reply_message (piece, replyinfo_obj):
+
+    if piece.gpg_data == None:
+        replyinfo_obj.failed_decrypt = True
+        return
+
+    if piece.gpg_data.decrypted == False:
+        prepare_for_reply_sig(piece, replyinfo_obj)
+        return
+    else:
+        replyinfo_obj.success_decrypt = True
+
+    # we already have a key (and a message)
+    if replyinfo_obj.target_key != None:
+        return
+
+    if piece.gpg_data.sigs != []:
+        replyinfo_obj.target_key = piece.gpg_data.sigs[0]
+        get_signed_part = False
+    else:
+        # only include a signed message in the reply.
+        get_signed_part = True
+
+    replyinfo_obj.msg_to_quote = flatten_decrypted_payloads(piece.gpg_data.plainobj, get_signed_part)
+
+    # to catch public keys in encrypted blocks
+    prepare_for_reply(piece.gpg_data.plainobj, replyinfo_obj)
+
+
+def prepare_for_reply_pubkey (piece, replyinfo_obj):
+
+    if piece.gpg_data == None or piece.gpg_data.keys == []:
+        replyinfo_obj.no_public_key = True
+    else:
+        replyinfo_obj.public_key_received = True
+
+        if replyinfo_obj.fallback_target_key == None:
+            replyinfo_obj.fallback_target_key = piece.gpg_data.keys[0]
+
+
+def prepare_for_reply_sig (piece, replyinfo_obj):
+
+    if piece.gpg_data == None or piece.gpg_data.sigs == []:
+        replyinfo_obj.sig_failure = True
+    else:
+        replyinfo_obj.sig_success = True
+
+        if replyinfo_obj.fallback_target_key == None:
+            replyinfo_obj.fallback_target_key = piece.gpg_data.sigs[0]
 
 
 
