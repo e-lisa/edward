@@ -48,7 +48,7 @@ from email.mime.nonmultipart    import MIMENonMultipart
 
 import edward_config
 
-langs = ["an", "de", "el", "en", "fr", "ja", "pt-br", "ro", "ru", "tr"]
+langs = ["de", "el", "en", "fr", "ja", "pt-br", "ro", "ru", "tr"]
 
 match_types =  [('clearsign',
                 '-----BEGIN PGP SIGNED MESSAGE-----.*?-----BEGIN PGP SIGNATURE-----.*?-----END PGP SIGNATURE-----'),
