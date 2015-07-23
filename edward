@@ -349,7 +349,7 @@ def prepare_for_reply_pieces (eddymsg_obj, replyinfo_obj):
                 prepare_for_reply(piece.gpg_data.plainobj, replyinfo_obj)
 
         elif piece.piece_type == "pubkey":
-            if piece.gpg_data == None:
+            if piece.gpg_data == None or piece.gpg_data.keys == []:
                 replyinfo_obj.no_public_key = True
             else:
                 replyinfo_obj.public_key_received = True
@@ -359,7 +359,7 @@ def prepare_for_reply_pieces (eddymsg_obj, replyinfo_obj):
 
         elif (piece.piece_type == "clearsign") \
                 or (piece.piece_type == "detachedsig"):
-            if piece.gpg_data == None:
+            if piece.gpg_data == None or piece.gpg_data.sigs == []:
                 replyinfo_obj.sig_failure = True
             else:
                 replyinfo_obj.sig_success = True
