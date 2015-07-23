@@ -405,7 +405,7 @@ def flatten_decrypted_payloads (eddymsg_obj, get_signed_part):
     # recurse on multi-part mime
     if eddymsg_obj.multipart == True:
         for sub in eddymsg_obj.subparts:
-            flat_string += flatten_decrypted_payloads (sub)
+            flat_string += flatten_decrypted_payloads (sub, get_signed_part)
 
         return flat_string
 
@@ -415,7 +415,7 @@ def flatten_decrypted_payloads (eddymsg_obj, get_signed_part):
 
         if (get_signed_part):
             # don't include nested encryption
-            elif (piece.piece_type == "message") \
+            if (piece.piece_type == "message") \
                     and (piece.gpg_data != None) \
                     and (piece.gpg_data.decrypted == False):
                         flat_string += flatten_decrypted_payloads(piece.gpg_data.plainobj, get_signed_part)
