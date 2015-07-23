@@ -634,7 +634,7 @@ def generate_encrypted_mime (plaintext, email_from, email_subject, encrypt_to_ke
                     gpgme_ctx):
 
     # quoted printable encoding lets most ascii characters look normal
-    # before the decrypted mime message is decoded.
+    # before the mime message is decoded.
     char_set = email.charset.Charset("utf-8")
     char_set.body_encoding = email.charset.QP
 
