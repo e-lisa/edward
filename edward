@@ -1093,10 +1093,17 @@ def decrypt_block (msg_block, gpgme_ctx):
     return (plaintext, fingerprints)
 
 
-
-
-
 def email_to_from_subject (email_text):
+    """Returns the values of the email's To:, From: and Subject: fields
+
+    Returns this information from an email.
+
+    Args:
+        email_text: the string form of the email
+
+    Returns:
+        the email To:, From:, and Subject: fields as strings
+    """
 
     email_struct = email.parser.Parser().parsestr(email_text)
 
@@ -1108,6 +1115,21 @@ def email_to_from_subject (email_text):
 
 
 def import_lang(email_to):
+    """Imports appropriate language file for basic i18n support
+
+    The language imported depends on the To: address of the email received by
+    edward. an -en ending implies the English language, whereas a -ja ending
+    implies Japanese. The list of supported languages is listed in the 'langs'
+    list at the beginning of the program.
+
+    Args:
+        email_to: the string containing the email address that the mail was
+        sent to.
+
+    Returns:
+        the reference to the imported language module. The only variable in
+        this file is the 'replies' dictionary.
+    """
 
     if email_to != None:
         for lang in langs:
@@ -1122,6 +1144,22 @@ def import_lang(email_to):
 
 def generate_encrypted_mime (plaintext, email_from, email_subject, encrypt_to_key,
                     gpgme_ctx):
+    """This function creates the mime email reply. It can encrypt the email.
+
+    If the encrypt_key is included, then the email is encrypted and signed.
+    Otherwise it is unencrypted.
+
+    Args:
+        plaintext: the plaintext body of the message to create.
+        email_from: the email address to reply to
+        email_subject: the subject to use in reply
+        encrypt_to_key: the key object to use for encrypting the email. (or
+            None)
+        gpgme_ctx: the gpgme context
+
+    Returns
+        A string version of the mime message, possibly encrypted and signed.
+    """
 
     # quoted printable encoding lets most ascii characters look normal
     # before the mime message is decoded.
@@ -1169,6 +1207,17 @@ def generate_encrypted_mime (plaintext, email_from, email_subject, encrypt_to_ke
 
 
 def email_quote_text (text):
+    """Quotes input text by inserting "> "s
+
+    This is useful for quoting a text for the reply message. It inserts "> "
+    strings at the beginning of lines.
+
+    Args:
+        text: plain text to quote
+
+    Returns:
+        Quoted text
+    """
 
     quoted_message = re.sub(r'^', r'> ', text, flags=re.MULTILINE)
 
@@ -1176,6 +1225,18 @@ def email_quote_text (text):
 
 
 def encrypt_sign_message (plaintext, encrypt_to_key, gpgme_ctx):
+    """Encrypts and signs plaintext
+
+    This encrypts and signs a message.
+
+    Args:
+        plaintext: text to sign and ecrypt
+        encrypt_to_key: the key object to encrypt to
+        gpgme_ctx: the gpgme context
+
+    Returns:
+        An encrypted and signed string of text
+    """
 
     plaintext_bytes = io.BytesIO(plaintext.encode('ascii'))
     encrypted_bytes = io.BytesIO()
@@ -1188,17 +1249,59 @@ def encrypt_sign_message (plaintext, encrypt_to_key, gpgme_ctx):
 
 
 def error (error_msg):
+    """Write an error message to stdout
+
+    The error message includes the program name.
+
+    Args:
+        error_msg: the message to print
+
+    Returns:
+        Nothing
+
+    Post:
+        An error message is printed to stdout
+    """
 
     sys.stderr.write(progname + ": " + str(error_msg) + "\n")
 
 
 def debug (debug_msg):
+    """Writes a debug message to stdout if debug == True
+
+    If the debug option is set in edward_config.py, then the passed message
+    gets printed to stdout.
+
+    Args:
+        debug_msg: the message to print to stdout
+
+    Returns:
+        Nothing
+
+    Post:
+        A debug message is printed to stdout
+    """
 
     if edward_config.debug == True:
         error(debug_msg)
 
 
 def handle_args ():
+    """Sets the progname variable and complains about any arguments
+
+    If there are any arguments, then edward complains and quits, because input
+    is read from stdin.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Post:
+        Exits with error 1 if there are arguments, otherwise returns to the
+        calling function, such as main().
+    """
 
     global progname
     progname = sys.argv[0]
@@ -1210,6 +1313,7 @@ def handle_args ():
 
 
 if __name__ == "__main__":
+    """Executes main if this file is not loaded interactively"""
 
     main()
 
