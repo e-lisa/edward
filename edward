@@ -220,7 +220,7 @@ def main ():
         None
 
     Returns:
-        None
+        Nothing
 
     Pre:
         Mime or plaintext email passing in through standard input.  Portions of
@@ -263,6 +263,22 @@ def main ():
 
 
 def get_gpg_context (gnupghome, sign_with_key_fp):
+    """
+    This function returns the GPG context needed for encryption and signing.
+
+    The context is needed by other functions which use GPG functionality.
+
+    Args:
+        gnupghome: The path to "~/.gnupg/" or its alternative.
+        sign_with_key: The fingerprint of the key to sign with
+
+    Returns:
+        A gpgme context to be used for GPG functions.
+
+    Post:
+        the 'armor' flag is set to True and the list of signing keys contains
+        the single specified key
+    """
 
     os.environ['GNUPGHOME'] = gnupghome
 
@@ -282,6 +298,24 @@ def get_gpg_context (gnupghome, sign_with_key_fp):
 
 
 def parse_pgp_mime (email_text, gpgme_ctx):
+    """Parses the email for mime payloads and decrypts/verfies signatures.
+
+    This function creates a representation of a mime or plaintext email with
+    the EddyMsg class. It then splits each mime payload into one or more pieces
+    which may be plain text or GPG data. It then decrypts encrypted parts and
+    does some very basic signature verification on those parts.
+
+    Args:
+        email_text: an email message in string format
+        gpgme_ctx:  a gpgme context
+
+    Returns:
+        A message as an instance of EddyMsg
+
+    Post:
+        the returned EddyMsg instance has split, decrypted, verified and pubkey
+        imported payloads
+    """
 
     email_struct = email.parser.Parser().parsestr(email_text)
 
@@ -293,6 +327,18 @@ def parse_pgp_mime (email_text, gpgme_ctx):
 
 
 def parse_mime(msg_struct):
+    """Translates python's email.parser format into an EddyMsg format
+
+    If the message is multi-part, then a recursive object is created, where
+    each sub-part is also a EddyMsg instance.
+
+    Args:
+        msg_struct: an email parsed with email.parser.Parser(), which can be
+            multi-part
+
+    Returns:
+        an instance of EddyMsg, potentially a recursive one.
+    """
 
     eddymsg_obj = EddyMsg()
 
@@ -309,6 +355,23 @@ def parse_mime(msg_struct):
 
 
 def scan_and_split (payload_piece, match_type, pattern):
+    """This splits the payloads of an EddyMsg object into GPG and text parts.
+
+    An EddyMsg object's payload_pieces starts off as a list containing a single
+    PayloadPiece object. This function returns a list of these objects which
+    have been split into GPG data and regular text, if such splits need to be/
+    can be made.
+
+    Args:
+        payload_piece: a single payload or a split part of a payload
+        match_type: the type of data to try to spit out from the payload piece
+        pattern: the search pattern to be used for finding that type of data
+
+    Returns:
+        a list of objects of the PayloadPiece class, in the order that the
+        string part of payload_piece originally was, broken up according to
+        matches specified by 'pattern'.
+    """
 
     # don't try to re-split pieces containing gpg data
     if payload_piece.piece_type != "text":
@@ -342,6 +405,17 @@ def scan_and_split (payload_piece, match_type, pattern):
 
 
 def get_subpart_data (part):
+    """This function grabs information from a single part mime object.
+
+    It copies needed data from a single part email.parser.Parser() object over
+    to an EddyMsg object.
+
+    Args:
+        part: a non-multi-part mime.parser.Parser() object
+
+    Returns:
+        a single-part EddyMsg() object
+    """
 
     obj = EddyMsg()
 
@@ -370,6 +444,25 @@ def get_subpart_data (part):
 
 
 def do_to_eddys_pieces (function_to_do, eddymsg_obj, data):
+    """A function which maps another function onto a message's subparts.
+
+    This is a higer-order function which recursively performs a specified
+    function on each subpart of a multi-part message. Each single-part sub-part
+    has the function applied to it. This function also works if the part passed
+    in is single-part.
+
+    Args:
+        function_to_do: function to perform on sub-parts
+        eddymsg_obj: a single part or multi-part EddyMsg object
+        data: a second argument to pass to 'function_to_do'
+
+    Returns:
+        Nothing
+
+    Post:
+        The passed-in EddyMsg object is transformed recursively on its
+        sub-parts according to 'function_to_do'.
+    """
 
     if eddymsg_obj.multipart == True:
         for sub in eddymsg_obj.subparts:
@@ -379,12 +472,52 @@ def do_to_eddys_pieces (function_to_do, eddymsg_obj, data):
 
 
 def split_payloads (eddymsg_obj):
+    """Splits all (sub-)payloads of a message into GPG data and regular text.
+
+    Recursively performs payload splitting on all sub-parts of an EddyMsg
+    object into the various GPG data types, such as GPG messages, public key
+    blocks and signed text.
+
+    Args:
+        eddymsg_obj: an instance of EddyMsg
+
+    Returns:
+        Nothing
+
+    Pre:
+        The EddyMsg object has payloads that are unsplit (by may be split)..
+
+    Post:
+        The EddyMsg object's payloads are all split into GPG and non-GPG parts.
+    """
 
     for match_type in match_types:
         do_to_eddys_pieces(split_payload_pieces, eddymsg_obj, match_type)
 
 
 def split_payload_pieces (eddymsg_obj, match_type):
+    """A helper function for split_payloads(); works on PayloadPiece objects.
+
+    This function splits up PayloadPiece objects into multipe PayloadPiece
+    objects and replaces the EddyMsg object's previous list of payload pieces
+    with the new split up one.
+
+    Args:
+        eddymsg_obj: a single-part EddyMsg object.
+        match_type: a tuple from the match_types list, which specifies a match
+            name and a match pattern.
+
+    Returns:
+        Nothing
+
+    Pre:
+        The payload piece(s) of an EddyMsg object may be already split or
+        unsplit.
+
+    Post:
+        The EddyMsg object's payload piece(s) are split into a list of pieces
+        if matches of the match_type are found.
+    """
 
     (match_name, pattern) = match_type
 
@@ -396,6 +529,32 @@ def split_payload_pieces (eddymsg_obj, match_type):
 
 
 def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
+    """Performs GPG operations on the GPG parts of the message
+
+    This function decrypts text, verifies signatures, and imports public keys
+    included in an email.
+
+    Args:
+        eddymsg_obj: an EddyMsg object with its payload_pieces split into GPG
+            and non-GPG sections by split_payloads()
+        gpgme_ctx: a gpgme context
+
+        prev_parts: a list of mime parts that occur before the eddymsg_obj
+            part, under the same multi-part mime part. This is used for
+            verifying detached signatures. For the root mime part, this should
+            be an empty list, which is the default value if this paramater is
+            omitted.
+
+    Return:
+        Nothing
+
+    Pre:
+        eddymsg_obj should have its payloads split into gpg and non-gpg pieces.
+
+    Post:
+        Decryption, verification and key imports occur. the gpg_data member of
+        PayloadPiece objects get filled in with GPGData objects.
+    """
 
     if eddymsg_obj.multipart == True:
         prev_parts=[]
