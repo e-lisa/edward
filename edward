@@ -1093,21 +1093,7 @@ def decrypt_block (msg_block, gpgme_ctx):
     return (plaintext, fingerprints)
 
 
-def choose_reply_encryption_key (gpgme_ctx, fingerprints):
 
-    reply_key = None
-    for fp in fingerprints:
-        try:
-            key = gpgme_ctx.get_key(fp)
-
-            if (key.can_encrypt == True):
-                reply_key = key
-                break
-        except:
-            continue
-
-
-    return reply_key
 
 
 def email_to_from_subject (email_text):
