@@ -839,16 +839,17 @@ def debug (debug_msg):
 
 
 def handle_args ():
-    if __name__ == "__main__":
 
-        global progname
-        progname = sys.argv[0]
+    global progname
+    progname = sys.argv[0]
 
-        if len(sys.argv) > 1:
-            print(progname + ": error, this program doesn't " \
-                    "need any arguments.", file=sys.stderr)
-            exit(1)
+    if len(sys.argv) > 1:
+        print(progname + ": error, this program doesn't " \
+                "need any arguments.", file=sys.stderr)
+        exit(1)
 
 
-main()
+if __name__ == "__main__":
+
+    main()
 
