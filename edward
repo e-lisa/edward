@@ -801,7 +801,6 @@ def flatten_decrypted_payloads (eddymsg_obj, get_signed_part):
 
     for piece in eddymsg_obj.payload_pieces:
         if (get_signed_part):
-            # don't include nested encryption
             if ((piece.piece_type == "clearsign") \
                     or (piece.piece_type == "detachedsig") \
                     or (piece.piece_type == "signature")) \
