@@ -50,6 +50,10 @@ import edward_config
 
 langs = ["de", "el", "en", "fr", "ja", "pt-br", "ro", "ru", "tr"]
 
+"""This list contains the abbreviated names of reply languages available to
+edward."""
+
+
 match_types =  [('clearsign',
                 '-----BEGIN PGP SIGNED MESSAGE-----.*?-----BEGIN PGP SIGNATURE-----.*?-----END PGP SIGNATURE-----'),
                 ('message',
@@ -59,8 +63,33 @@ match_types =  [('clearsign',
                 ('detachedsig',
                 '-----BEGIN PGP SIGNATURE-----.*?-----END PGP SIGNATURE-----')]
 
+"""This list of tuples matches query names with re.search() queries used
+to find GPG data for edward to process."""
+
 
 class EddyMsg (object):
+    """
+    The EddyMsg class represents relevant parts of a mime message.
+
+    The represented message can be single-part or multi-part.
+
+    'multipart' is set to True if there are multiple mime parts.
+
+    'subparts' points to a list of mime sub-parts if it is a multi-part
+    message. Otherwise it points to an empty list.
+
+    'payload_bytes' contains the raw mime-decoded bytes that haven't been
+    encoded into a character set.
+
+    'payload_pieces' is a list of objects containing strings that when strung
+    together form the fully-decoded string representation of the mime part.
+
+    The 'charset' describes the character set of payload_bytes.
+
+    The 'filename', 'content_type' and 'description_list' come from the mime
+    part parameters.
+    """
+
     def __init__(self):
         self.multipart          = False
         self.subparts           = []
@@ -75,6 +104,25 @@ class EddyMsg (object):
 
 
 class PayloadPiece (object):
+    """
+    PayloadPiece represents a complte or sub-section of a mime part.
+
+    Instances of this class are often strung together within one or more arrays
+    pointed to by each instance of the EddyMsg class.
+
+    'piece_type' refers to a string whose value describes the content of
+    'string'.  Examples include "pubkey", for public keys, and "message", for
+    encrypted data (or armored signatures until they are known to be such.) The
+    names derive from the header and footer of each of these ascii-encoded gpg
+    blocks.
+
+    'string' contains some string of text, such as non-GPG text, an encrypted
+    block of text, a signature, or a public key.
+
+    'gpg_data' points to any instances of GPGData that have been created based
+    on the contents of 'string'.
+    """
+
     def __init__(self):
         self.piece_type         = None
         self.string             = None
@@ -82,6 +130,22 @@ class PayloadPiece (object):
 
 
 class GPGData (object):
+    """
+    GPGData holds info from decryption, sig. verification, and/or pub. keys.
+
+    Instances of this class contain decrypted information, signature
+    fingerprints and/or fingerprints of processed and imported public keys.
+
+    'decrypted' is set to True if 'plainobj' was created from encrypted data.
+
+    'plainobj' points to any decrypted, or signed part of, a GPG signature. It
+    is intended to be an instance of the EddyMsg class.
+
+    'sigs' is a list of fingerprints of keys used to sign the data in plainobj.
+
+    'keys' is a list of fingerprints of keys obtained in public key blocks.
+    """
+
     def __init__(self):
         self.decrypted          = False
 
@@ -90,6 +154,48 @@ class GPGData (object):
         self.keys               = []
 
 class ReplyInfo (object):
+    """
+    ReplyInfo contains details that edward uses in generating its reply.
+
+    Instances of this class contain information about whether a message was
+    successfully encrypted or signed, and whether a public key was attached, or
+    retrievable, from the local GPG store. It stores the fingerprints of
+    potential encryption key candidates and the message (if any at all) to
+    quote in edward's reply.
+
+    'replies' points one of the dictionaries of translated replies.
+
+    'target_key' refers to the fingerprint of a key used to sign encrypted
+    data. This is the preferred key, if it is set, and if is available.
+
+    'fallback_target_key' referst to the fingerprint of a key used to sign
+    unencrypted data; alternatively it may be a public key attached to the
+    message.
+
+    'msg_to_quote' refers to the part of a message which edward should quote in
+    his reply. This should remain as None if there was no encrypted and singed
+    part. This is to avoid making edward a service for decrypting other
+    people's messages to edward.
+
+    'success_decrypt' is set to True if edward could decrypt part of the
+    message.
+
+    'failed_decrypt' is set to True if edward failed to decrypt part of the
+    message.
+
+    'publick_key_received' is set to True if edward successfully imported a
+    public key.
+
+    'no_public_key' is set to True if edward doesn't have a key to encrypt to
+    when replying to the user.
+
+    'sig_success' is set to True if edward could to some extent verify the
+    signature of a signed part of the message to edward.
+
+    'sig_failure' is set to True if edward failed to some extent verify the
+    signature of a signed part of the message to edward.
+    """
+
     def __init__(self):
         self.replies                = None
 
@@ -106,6 +212,33 @@ class ReplyInfo (object):
 
 
 def main ():
+
+    """
+    This is the main function for edward, a GPG reply bot.
+
+    Edward responds to GPG-encrypted and signed mail, encrypting and signing
+    the response if the user's public key is, or was, included in the message.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Pre:
+        Mime or plaintext email passing in through standard input.  Portions of
+        the email may be encrypted. If the To: address contains the text
+        "edward-ja", then the reply will contain a reply written in the
+        Japanese language.  There are other languages as well. The default
+        language is English.
+
+    Post:
+        A reply email will be printed to standard output. The contents of the
+        reply email depends on whether the original email was encrypted or not,
+        has or doesn't have a signature, whether a public key used in the
+        original message is provided or locally stored, and the language
+        implied by the To: address in the original email.
+    """
 
     handle_args()
 
