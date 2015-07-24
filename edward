@@ -786,6 +786,25 @@ def prepare_for_reply_sig (piece, replyinfo_obj):
 
 
 def flatten_decrypted_payloads (eddymsg_obj, get_signed_part):
+    """Returns a string representation of a signed, encrypted part.
+
+    Returns the string representation of the first signed/encrypted or signed
+    then encrypted block of text. (Signature inside of Encryption)
+
+    Args:
+        eddymsg_obj: the message in EddyMsg format created by decrypting GPG
+            text
+        get_signed_part: True if we should only include text that contains a
+            further signature. If False, then include plain text.
+
+    Returns:
+        A string representation of encrypted and signed text.
+
+    Pre:
+        The EddyMsg instance passed in should be a piece.gpg_data.plainobj
+        which represents decrypted text. It may or may not be signed on that
+        level.
+    """
 
     flat_string = ""
 
@@ -816,6 +835,28 @@ def flatten_decrypted_payloads (eddymsg_obj, get_signed_part):
 
 
 def get_key_from_fp (replyinfo_obj, gpgme_ctx):
+    """Obtains a public key object from a key fingerprint
+
+    If the .target_key is not set, then we use .fallback_target_key.
+
+    Args:
+        replyinfo_obj: ReplyInfo instance
+        gpgme_ctx: the gpgme context
+
+    Return:
+        The key object of the key of either the target_key or the fallback one
+        if .target_key is not set. If the key cannot be loaded, then return
+        None.
+
+    Pre:
+        Loading a key requires that we have the public key imported. This
+        requires that they email contains the pub key block, or that it was
+        previously sent to edward.
+
+    Post:
+        If the key cannot be loaded, then the replyinfo_obj is marked for
+        having no public key available.
+    """
 
     if replyinfo_obj.target_key == None:
         replyinfo_obj.target_key = replyinfo_obj.fallback_target_key
@@ -839,6 +880,22 @@ def get_key_from_fp (replyinfo_obj, gpgme_ctx):
 
 
 def write_reply (replyinfo_obj):
+    """Write the reply email body about the GPG successes/failures.
+
+    The reply is about whether decryption, sig verification and key
+    import/loading was successful or failed. If text was successfully decrypted
+    and verified, then the first instance of such text will be included in
+    quoted form.
+
+    Args:
+        replyinfo_obj: contains details of GPG processing status
+
+    Returns:
+        the plaintext message to be sent to the user
+
+    Pre:
+        replyinfo_obj should be populated with info about GPG processing status.
+    """
 
     reply_plain = ""
 
@@ -878,6 +935,18 @@ def write_reply (replyinfo_obj):
 
 
 def add_gpg_key (key_block, gpgme_ctx):
+    """Adds a GPG pubkey to the local keystore
+
+    This adds keys received through email into the key store so they can be
+    used later.
+
+    Args:
+        key_block: the string form of the ascii-armored public key block
+        gpgme_ctx: the gpgme context
+
+    Returns:
+        the fingerprint(s) of the imported key(s)
+    """
 
     fp = io.BytesIO(key_block.encode('ascii'))
 
@@ -897,6 +966,23 @@ def add_gpg_key (key_block, gpgme_ctx):
 
 
 def verify_sig_message (msg_block, gpgme_ctx):
+    """Verifies the signature of a signed, ascii-armored block of text.
+
+    It encodes the string into ascii, since binary GPG files are currently
+    unsupported, and alternative, the ascii-armored format is encodable into
+    ascii.
+
+    Args:
+        msg_block: a GPG Message block in string form. It may be encrypted or
+            not. If it is encrypted, it will return empty results.
+        gpgme_ctx: the gpgme context
+
+    Returns:
+        A tuple of the plaintext of the signed part and the list of
+        fingerprints of keys signing the data. If verification failed, perhaps
+        because the message was also encrypted, then empty results are
+        returned.
+    """
 
     block_b = io.BytesIO(msg_block.encode('ascii'))
     plain_b = io.BytesIO()
@@ -915,6 +1001,20 @@ def verify_sig_message (msg_block, gpgme_ctx):
 
 
 def verify_clear_signature (sig_block, gpgme_ctx):
+    """Verifies the signature of a clear signature.
+
+    It first encodes the string into utf-8, but this will need to be fixed in
+    order to support other character encodings.
+
+    Args:
+        sig_block: a string of clear-signed text.
+        gpgme_ctx: the gpgme context
+
+    Returns:
+        A tuple of the plaintext of the signed part and the list of
+        fingerprints of keys signing the data. If verification failed, then
+        empty results are returned.
+    """
 
     # FIXME: this might require the un-decoded bytes
     # or the correct re-encoding with the carset of the mime part.
@@ -934,6 +1034,19 @@ def verify_clear_signature (sig_block, gpgme_ctx):
 
 
 def verify_detached_signature (detached_sig, plaintext_bytes, gpgme_ctx):
+    """Verifies the signature of a detached signature.
+
+    This requires the signature part and the signed part as separate arguments.
+
+    Args:
+        detached_sig: the signature part of the detached signature
+        plaintext_bytes: the byte form of the message being signed.
+        gpgme_ctx: the gpgme context
+
+    Returns:
+        A list of signing fingerprints if the signature verification was
+        sucessful. Otherwise, an empty list is returned.
+    """
 
     detached_sig_fp = io.BytesIO(detached_sig.encode('ascii'))
     plaintext_fp = io.BytesIO(plaintext_bytes)
@@ -949,6 +1062,18 @@ def verify_detached_signature (detached_sig, plaintext_bytes, gpgme_ctx):
 
 
 def decrypt_block (msg_block, gpgme_ctx):
+    """Decrypts a block of GPG text, and verifies any included sigatures.
+
+    Some encypted messages have embeded signatures, so those are verified too.
+
+    Args:
+        msg_block: the encrypted(/signed) text
+        gpgme_ctx: the gpgme context
+
+    Returns:
+        A tuple of plaintext and signatures, if the decryption and signature
+        verification were successful, respectively.
+    """
 
     block_b = io.BytesIO(msg_block.encode('ascii'))
     plain_b = io.BytesIO()
