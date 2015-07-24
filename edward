@@ -800,22 +800,18 @@ def flatten_decrypted_payloads (eddymsg_obj, get_signed_part):
         return flat_string
 
     for piece in eddymsg_obj.payload_pieces:
-        if piece.piece_type == "text":
-            flat_string += piece.string
-
         if (get_signed_part):
             # don't include nested encryption
-            if (piece.piece_type == "message") \
-                    and (piece.gpg_data != None) \
-                    and (piece.gpg_data.decrypted == False):
-                        flat_string += flatten_decrypted_payloads(piece.gpg_data.plainobj, get_signed_part)
-
-            elif ((piece.piece_type == "clearsign") \
+            if ((piece.piece_type == "clearsign") \
                     or (piece.piece_type == "detachedsig") \
                     or (piece.piece_type == "signature")) \
                     and (piece.gpg_data != None):
                         # FIXME: the key used to sign this message needs to be the one that is used for the encrypted reply.
-                        flat_string += flatten_decrypted_payloads (piece.gpg_data.plainobj, get_signed_part)
+                        flat_string += flatten_decrypted_payloads (piece.gpg_data.plainobj, False)
+                        break
+        else:
+            if piece.piece_type == "text":
+                flat_string += piece.string
 
     return flat_string
 
