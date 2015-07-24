@@ -19,7 +19,7 @@
 
 NUM_TESTS=1
 #TEST_TYPES="gpg-flatten flatten plain"
-TEST_TYPES="gpg-flatten flatten"
+TEST_TYPES="gpg-flatten"
 
 function _main {
 
