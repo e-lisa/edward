@@ -591,6 +591,8 @@ def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
                 # recurse!
                 piece.gpg_data.plainobj = parse_pgp_mime(plaintext, gpgme_ctx)
 
+        # FIXME: handle pubkeys first, so that signatures can be validated
+        # on freshly imported keys
         elif piece.piece_type == "pubkey":
             key_fps = add_gpg_key(piece.string, gpgme_ctx)
 
