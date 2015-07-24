@@ -90,17 +90,16 @@ class EddyMsg (object):
     part parameters.
     """
 
-    def __init__(self):
-        self.multipart          = False
-        self.subparts           = []
+    multipart               = False
+    subparts                = []
 
-        self.charset            = None
-        self.payload_bytes      = None
-        self.payload_pieces     = []
+    payload_bytes           = None
+    payload_pieces          = []
 
-        self.filename           = None
-        self.content_type       = None
-        self.description_list   = None
+    charset                 = None
+    filename                = None
+    content_type            = None
+    description_list        = None
 
 
 class PayloadPiece (object):
@@ -123,10 +122,9 @@ class PayloadPiece (object):
     on the contents of 'string'.
     """
 
-    def __init__(self):
-        self.piece_type         = None
-        self.string             = None
-        self.gpg_data           = None
+    piece_type              = None
+    string                  = None
+    gpg_data                = None
 
 
 class GPGData (object):
@@ -146,12 +144,12 @@ class GPGData (object):
     'keys' is a list of fingerprints of keys obtained in public key blocks.
     """
 
-    def __init__(self):
-        self.decrypted          = False
+    decrypted               = False
 
-        self.plainobj           = None
-        self.sigs               = []
-        self.keys               = []
+    plainobj                = None
+    sigs                    = []
+    keys                    = []
+
 
 class ReplyInfo (object):
     """
@@ -196,19 +194,18 @@ class ReplyInfo (object):
     signature of a signed part of the message to edward.
     """
 
-    def __init__(self):
-        self.replies                = None
+    replies                 = None
 
-        self.target_key             = None
-        self.fallback_target_key    = None
-        self.msg_to_quote           = ""
+    target_key              = None
+    fallback_target_key     = None
+    msg_to_quote            = ""
 
-        self.success_decrypt        = False
-        self.failed_decrypt         = False
-        self.public_key_received    = False
-        self.no_public_key          = False
-        self.sig_success            = False
-        self.sig_failure            = False
+    success_decrypt         = False
+    failed_decrypt          = False
+    public_key_received     = False
+    no_public_key           = False
+    sig_success             = False
+    sig_failure             = False
 
 
 def main ():
