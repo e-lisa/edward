@@ -622,10 +622,52 @@ def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
 
 
 def prepare_for_reply (eddymsg_obj, replyinfo_obj):
+    """Updates replyinfo_obj with info on the message's GPG success/failures
+
+    This function marks replyinfo_obj with information about whether encrypted
+    text in eddymsg_obj was successfully decrypted, signatures were verified
+    and whether a public key was found or not.
+
+    Args:
+        eddymsg_obj: a message in the EddyMsg format
+        replyinfo_obj: an instance of ReplyInfo
+
+    Returns:
+        Nothing
+
+    Pre:
+        eddymsg_obj has had its gpg_data created by gpg_on_payloads
+
+    Post:
+        replyinfo_obj has been updated with info about decryption/sig
+        verififcation status, etc. However the desired key isn't imported until
+        later, so the success or failure of that updates the values set here.
+    """
 
     do_to_eddys_pieces(prepare_for_reply_pieces, eddymsg_obj, replyinfo_obj)
 
 def prepare_for_reply_pieces (eddymsg_obj, replyinfo_obj):
+    """A helper function for prepare_for_reply
+
+    It updates replyinfo_obj with GPG success/failure information, when
+    supplied a single-part EddyMsg object.
+
+    Args:
+        eddymsg_obj: a single-part message in the EddyMsg format
+        replyinfo_obj: an object which holds information about the message's
+            GPG status
+
+    Returns:
+        Nothing
+
+    Pre:
+        eddymsg_obj is a single-part message. (it may be a part of a multi-part
+        message.) It has had its gpg_data created by gpg_on_payloads if it has
+        gpg data.
+
+    Post:
+        replyinfo_obj has been updated with gpg success/failure information
+    """
 
     for piece in eddymsg_obj.payload_pieces:
         if piece.piece_type == "text":
@@ -645,6 +687,28 @@ def prepare_for_reply_pieces (eddymsg_obj, replyinfo_obj):
 
 
 def prepare_for_reply_message (piece, replyinfo_obj):
+    """Helper function for prepare_for_reply()
+
+    This function is called when the piece_type of a payload piece is
+    "message", or GPG Message block. This should be encrypted text. If the
+    encryted block is signed, a sig will be attached to .target_key unless
+    there is already one there.
+
+    Args:
+        piece: a PayloadPiece object.
+        replyinfo_obj: object which gets updated with decryption status, etc.
+
+
+    Returns:
+        Nothing
+
+    Pre:
+        the piece.payload_piece value should be "message".
+
+    Post:
+        replyinfo_obj gets updated with decryption status, signing status and a
+        potential signing key.
+    """
 
     if piece.gpg_data == None:
         replyinfo_obj.failed_decrypt = True
@@ -670,6 +734,20 @@ def prepare_for_reply_message (piece, replyinfo_obj):
 
 
 def prepare_for_reply_pubkey (piece, replyinfo_obj):
+    """Helper function for prepare_for_reply(). Marks pubkey import status.
+
+    Marks replyinfo_obj with pub key import status.
+
+    Args:
+        piece: a PayloadPiece object
+        replyinfo_obj: a ReplyInfo object
+
+    Pre:
+        piece.piece_type should be set to "pubkey".
+
+    Post:
+        replyinfo_obj has its fields updated.
+    """
 
     if piece.gpg_data == None or piece.gpg_data.keys == []:
         replyinfo_obj.no_public_key = True
@@ -681,6 +759,21 @@ def prepare_for_reply_pubkey (piece, replyinfo_obj):
 
 
 def prepare_for_reply_sig (piece, replyinfo_obj):
+    """Helper function for prepare_for_reply(). Marks sig verification status.
+
+    Marks replyinfo_obj with signature verification status.
+
+    Args:
+        piece: a PayloadPiece object
+        replyinfo_obj: a ReplyInfo object
+
+    Pre:
+        piece.piece_type should be set to "clearsign", "signature", or
+        "detachedsig".
+
+    Post:
+        replyinfo_obj has its fields updated.
+    """
 
     if piece.gpg_data == None or piece.gpg_data.sigs == []:
         replyinfo_obj.sig_failure = True
