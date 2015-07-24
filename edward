@@ -786,7 +786,6 @@ def prepare_for_reply_sig (piece, replyinfo_obj):
             replyinfo_obj.fallback_target_key = piece.gpg_data.sigs[0]
 
 
-
 def flatten_decrypted_payloads (eddymsg_obj, get_signed_part):
     """Returns a string representation of a signed, encrypted part.
 
