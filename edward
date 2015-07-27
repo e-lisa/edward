@@ -1145,7 +1145,7 @@ def import_lang(email_to):
     return importlib.import_module("lang.en")
 
 
-def generate_encrypted_mime (plaintext, email_from, email_subject, encrypt_to_key,
+def generate_encrypted_mime (plaintext, email_to, email_subject, encrypt_to_key,
                     gpgme_ctx):
     """This function creates the mime email reply. It can encrypt the email.
 
@@ -1154,7 +1154,7 @@ def generate_encrypted_mime (plaintext, email_from, email_subject, encrypt_to_ke
 
     Args:
         plaintext: the plaintext body of the message to create.
-        email_from: the email address to reply to
+        email_to: the email address to reply to
         email_subject: the subject to use in reply
         encrypt_to_key: the key object to use for encrypting the email. (or
             None)
@@ -1204,7 +1204,7 @@ def generate_encrypted_mime (plaintext, email_from, email_subject, encrypt_to_ke
     message_mime['Content-Disposition'] = 'inline'
 
 
-    message_mime['To'] = email_from
+    message_mime['To'] = email_to
     message_mime['Subject'] = email_subject
 
     reply = message_mime.as_string()
