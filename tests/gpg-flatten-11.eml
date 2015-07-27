@@ -1,0 +1,54 @@
+From: No One <noone@localhost>
+MIME-Version: 1.0
+To: No One <noone@localhost>
+Subject: =?UTF-8?B?44GT44KT44Gr44Gh44Gv44CB44GK5YWD5rCX44Gn44GZ44GL77yf?=
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="69pEqCNMs7DnfdpwkAdpUCaf0lwnKu6Vr"
+
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--69pEqCNMs7DnfdpwkAdpUCaf0lwnKu6Vr
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+thanks for the message!
+
+> =C3=9Cber Spa=C3=9F.
+>
+> qual =C3=A8 il suono di una mano sola?
+>
+> =E3=81=93=E3=82=93=E3=81=AB=E3=81=A1=E3=81=AF=E3=80=81=E3=81=8A=E5=85=83=
+=E6=B0=97=E3=81=A7=E3=81=99=E3=81=8B=EF=BC=9F
+>
+
+test.
+
+-andrew
+
+
+
+
+
+
+
+
+
+--69pEqCNMs7DnfdpwkAdpUCaf0lwnKu6Vr
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQEcBAEBCgAGBQJVr7ynAAoJEO8exSA5s25YknEH/isrM1jly/A0uwd6mgh60ob9
+1R6+Z8P68Prx19uGBbURkRQwXQUCv9v/Q7eJAOCi3fFqWtPZjPjW3bC4apOKguEU
+2DjjinZ9uBeHZz6W6R9Hs0JhbF038vMBmRz3BGouRqg06gTDwnj1l13RkbaZSsi2
+T/PjyaIS5P8ffEbIEwQt2gmFR2x/+eE3Ot/vzupdR8jZFk4oJ/YxtEOYFIc3Mnav
+8km9V1AKBlskASY0cW84R7pngFDTZeB2ElYdGslDu1r1GdeX4qAUhqYZVmZ8O4op
+4tv/gR51nw83lqJPgleZFMSFPPaafKb7JjeeYW6w4xjLKJ+xN1OV2Sjd5FM2KJs=
+=tTBC
+-----END PGP SIGNATURE-----
+
+--69pEqCNMs7DnfdpwkAdpUCaf0lwnKu6Vr--
+

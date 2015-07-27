@@ -1006,9 +1006,11 @@ def verify_detached_signature (detached_sig, plaintext_bytes, gpgme_ctx):
 
     detached_sig_fp = io.BytesIO(detached_sig.encode('ascii'))
     plaintext_fp = io.BytesIO(plaintext_bytes)
-    ptxt_fp = io.BytesIO()
 
-    result = gpgme_ctx.verify(detached_sig_fp, plaintext_fp, None)
+    try:
+        result = gpgme_ctx.verify(detached_sig_fp, plaintext_fp, None)
+    except gpgme.GpgmeError:
+        return []
 
     sig_fingerprints = []
     for res_ in result:
