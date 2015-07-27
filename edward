@@ -729,7 +729,7 @@ def prepare_for_reply_message (piece, replyinfo_obj):
         # only include a signed message in the reply.
         get_signed_part = True
 
-    replyinfo_obj.msg_to_quote = flatten_decrypted_payloads(piece.gpg_data.plainobj, get_signed_part)
+    flatten_decrypted_payloads(piece.gpg_data.plainobj, replyinfo_obj, get_signed_part)
 
     # to catch public keys in encrypted blocks
     prepare_for_reply(piece.gpg_data.plainobj, replyinfo_obj)
@@ -786,38 +786,44 @@ def prepare_for_reply_sig (piece, replyinfo_obj):
             replyinfo_obj.fallback_target_key = piece.gpg_data.sigs[0]
 
 
-def flatten_decrypted_payloads (eddymsg_obj, get_signed_part):
-    """Returns a string representation of a signed, encrypted part.
+def flatten_decrypted_payloads (eddymsg_obj, replyinfo_obj, get_signed_part):
+    """For creating a string representation of a signed, encrypted part.
 
-    Returns the string representation of the first signed/encrypted or signed
-    then encrypted block of text. (Signature inside of Encryption)
+    When given a decrypted payload, it will add either the plaintext or signed
+    plaintext to the reply message, depeding on 'get_signed_part'. This is
+    useful for ensuring that the reply message only comes from a signed and
+    ecrypted GPG message. It also sets the target_key for encrypting the reply
+    if it's told to get signed text only.
 
     Args:
         eddymsg_obj: the message in EddyMsg format created by decrypting GPG
             text
+        replyinfo_obj: a ReplyInfo object for holding the message to quote and
+            the target_key to encrypt to.
         get_signed_part: True if we should only include text that contains a
             further signature. If False, then include plain text.
 
     Returns:
-        A string representation of encrypted and signed text.
+        Nothing
 
     Pre:
         The EddyMsg instance passed in should be a piece.gpg_data.plainobj
         which represents decrypted text. It may or may not be signed on that
         level.
+
+    Post:
+        the ReplyInfo instance may have a new 'target_key' set and its
+        'msg_to_quote' will be updated with (possibly signed) plaintext, if any
+        could be found.
     """
 
-    flat_string = ""
-
     if eddymsg_obj == None:
-        return ""
+        return
 
     # recurse on multi-part mime
     if eddymsg_obj.multipart == True:
         for sub in eddymsg_obj.subparts:
-            flat_string += flatten_decrypted_payloads (sub, get_signed_part)
-
-        return flat_string
+            flatten_decrypted_payloads(sub, replyinfo_obj, get_signed_part)
 
     for piece in eddymsg_obj.payload_pieces:
         if (get_signed_part):
@@ -825,14 +831,12 @@ def flatten_decrypted_payloads (eddymsg_obj, get_signed_part):
                     or (piece.piece_type == "detachedsig") \
                     or (piece.piece_type == "signature")) \
                     and (piece.gpg_data != None):
-                        # FIXME: the key used to sign this message needs to be the one that is used for the encrypted reply.
-                        flat_string += flatten_decrypted_payloads (piece.gpg_data.plainobj, False)
+                        flatten_decrypted_payloads(piece.gpg_data.plainobj, replyinfo_obj, False)
+                        replyinfo_obj.target_key = piece.gpg_data.sigs[0]
                         break
         else:
             if piece.piece_type == "text":
-                flat_string += piece.string
-
-    return flat_string
+                replyinfo_obj.msg_to_quote += piece.string
 
 
 def get_key_from_fp (replyinfo_obj, gpgme_ctx):
