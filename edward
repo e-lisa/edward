@@ -742,8 +742,8 @@ def prepare_for_reply_pubkey (piece, replyinfo_obj):
     else:
         replyinfo_obj.public_key_received = True
 
-        if replyinfo_obj.fallback_target_key == None:
-            replyinfo_obj.fallback_target_key = piece.gpg_data.keys[0]
+        # prefer public key as a fallback for the encrypted reply
+        replyinfo_obj.fallback_target_key = piece.gpg_data.keys[0]
 
 
 def prepare_for_reply_sig (piece, replyinfo_obj):
