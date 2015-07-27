@@ -54,9 +54,7 @@ langs = ["de", "el", "en", "fr", "ja", "pt-br", "ro", "ru", "tr"]
 edward."""
 
 
-match_types =  [('clearsign',
-                '-----BEGIN PGP SIGNED MESSAGE-----.*?-----BEGIN PGP SIGNATURE-----.*?-----END PGP SIGNATURE-----'),
-                ('message',
+match_types =  [('message',
                 '-----BEGIN PGP MESSAGE-----.*?-----END PGP MESSAGE-----'),
                 ('pubkey',
                 '-----BEGIN PGP PUBLIC KEY BLOCK-----.*?-----END PGP PUBLIC KEY BLOCK-----'),
@@ -600,14 +598,6 @@ def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
                 piece.gpg_data = GPGData()
                 piece.gpg_data.keys = key_fps
 
-        elif piece.piece_type == "clearsign":
-            (plaintext, sig_fps) = verify_clear_signature(piece.string, gpgme_ctx)
-
-            if sig_fps != []:
-                piece.gpg_data = GPGData()
-                piece.gpg_data.sigs = sig_fps
-                piece.gpg_data.plainobj = parse_pgp_mime(plaintext, gpgme_ctx)
-
         elif piece.piece_type == "detachedsig":
             for prev in prev_parts:
                 payload_bytes = prev.payload_bytes
@@ -682,8 +672,7 @@ def prepare_for_reply_pieces (eddymsg_obj, replyinfo_obj):
         elif piece.piece_type == "pubkey":
             prepare_for_reply_pubkey(piece, replyinfo_obj)
 
-        elif (piece.piece_type == "clearsign") \
-            or (piece.piece_type == "detachedsig") \
+        elif (piece.piece_type == "detachedsig") \
             or (piece.piece_type == "signature"):
                     prepare_for_reply_sig(piece, replyinfo_obj)
 
@@ -770,8 +759,7 @@ def prepare_for_reply_sig (piece, replyinfo_obj):
         replyinfo_obj: a ReplyInfo object
 
     Pre:
-        piece.piece_type should be set to "clearsign", "signature", or
-        "detachedsig".
+        piece.piece_type should be set to "signature", or "detachedsig".
 
     Post:
         replyinfo_obj has its fields updated.
@@ -827,8 +815,7 @@ def flatten_decrypted_payloads (eddymsg_obj, replyinfo_obj, get_signed_part):
 
     for piece in eddymsg_obj.payload_pieces:
         if (get_signed_part):
-            if ((piece.piece_type == "clearsign") \
-                    or (piece.piece_type == "detachedsig") \
+            if ((piece.piece_type == "detachedsig") \
                     or (piece.piece_type == "signature")) \
                     and (piece.gpg_data != None):
                         flatten_decrypted_payloads(piece.gpg_data.plainobj, replyinfo_obj, False)
@@ -1003,39 +990,6 @@ def verify_sig_message (msg_block, gpgme_ctx):
     for sig in sigs:
         fingerprints += [sig.fpr]
     return (plaintext, fingerprints)
-
-
-def verify_clear_signature (sig_block, gpgme_ctx):
-    """Verifies the signature of a clear signature.
-
-    It first encodes the string into utf-8, but this will need to be fixed in
-    order to support other character encodings.
-
-    Args:
-        sig_block: a string of clear-signed text.
-        gpgme_ctx: the gpgme context
-
-    Returns:
-        A tuple of the plaintext of the signed part and the list of
-        fingerprints of keys signing the data. If verification failed, then
-        empty results are returned.
-    """
-
-    # FIXME: this might require the un-decoded bytes
-    # or the correct re-encoding with the carset of the mime part.
-    msg_fp = io.BytesIO(sig_block.encode('utf-8'))
-    ptxt_fp = io.BytesIO()
-
-    result = gpgme_ctx.verify(msg_fp, None, ptxt_fp)
-
-    # FIXME: this might require using the charset of the mime part.
-    plaintext = ptxt_fp.getvalue().decode('utf-8')
-
-    sig_fingerprints = []
-    for res_ in result:
-        sig_fingerprints += [res_.fpr]
-
-    return plaintext, sig_fingerprints
 
 
 def verify_detached_signature (detached_sig, plaintext_bytes, gpgme_ctx):

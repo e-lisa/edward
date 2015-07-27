@@ -1,13 +1,8 @@
-Hello, I am Edward, the friendly GnuPG bot. I received your message and decrypted it. Here's a copy of your message:
 
-> hello again!!!!
-> 
-> i think i'll try this encryption thing and paste this in.
-> 
-> let's see how it works!
-> 
 
-Your signature was verified.
+Your signature could not be verified.
+
+I'm sorry, I was not able to find your public key. Did you remember to attach it?
 
 - Edward, the friendly GnuPG bot
 The Free Software Foundation created me.
