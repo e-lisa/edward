@@ -76,13 +76,11 @@ class EddyMsg (object):
     'subparts' points to a list of mime sub-parts if it is a multi-part
     message. Otherwise it points to an empty list.
 
-    'payload_bytes' contains the raw mime-decoded bytes that haven't been
-    encoded into a character set.
+    'payload_bytes' is a binary representation of the mime part before header
+    removal and message decoding.
 
     'payload_pieces' is a list of objects containing strings that when strung
     together form the fully-decoded string representation of the mime part.
-
-    The 'charset' describes the character set of payload_bytes.
 
     The 'filename', 'content_type' and 'description_list' come from the mime
     part parameters.
@@ -94,7 +92,6 @@ class EddyMsg (object):
     payload_bytes           = None
     payload_pieces          = []
 
-    charset                 = None
     filename                = None
     content_type            = None
     description_list        = None
@@ -415,23 +412,24 @@ def get_subpart_data (part):
         a single-part EddyMsg() object
     """
 
-    obj = EddyMsg()
+    charset                 = part.get_content_charset()
+    mime_decoded_bytes      = part.get_payload(decode=True)
 
-    obj.charset             = part.get_content_charset()
-    obj.payload_bytes       = part.get_payload(decode=True)
+    obj = EddyMsg()
+    obj.payload_bytes       = part.as_bytes()
 
     obj.filename            = part.get_filename()
     obj.content_type        = part.get_content_type()
     obj.description_list    = part['content-description']
 
     # your guess is as good as a-myy-ee-ine...
-    if obj.charset == None:
-        obj.charset = 'utf-8'
+    if charset == None:
+        charset = 'utf-8'
 
-    if obj.payload_bytes != None:
+    if mime_decoded_bytes != None:
         try:
             payload = PayloadPiece()
-            payload.string = obj.payload_bytes.decode(obj.charset)
+            payload.string = mime_decoded_bytes.decode(charset)
             payload.piece_type = 'text'
 
             obj.payload_pieces = [payload]
@@ -600,8 +598,7 @@ def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
 
         elif piece.piece_type == "detachedsig":
             for prev in prev_parts:
-                payload_bytes = prev.payload_bytes
-                sig_fps = verify_detached_signature(piece.string, payload_bytes, gpgme_ctx)
+                sig_fps = verify_detached_signature(piece.string, prev.payload_bytes, gpgme_ctx)
 
                 if sig_fps != []:
                     piece.gpg_data = GPGData()
