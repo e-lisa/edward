@@ -939,8 +939,11 @@ def add_gpg_key (key_block, gpgme_ctx):
 
     fp = io.BytesIO(key_block.encode('ascii'))
 
-    result = gpgme_ctx.import_(fp)
-    imports = result.imports
+    try:
+        result = gpgme_ctx.import_(fp)
+        imports = result.imports
+    except gpgme.GpgmeError:
+        imports = []
 
     key_fingerprints = []
 
