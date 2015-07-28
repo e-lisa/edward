@@ -249,7 +249,7 @@ def main ():
     email_struct = parse_pgp_mime(email_text, gpgme_ctx)
 
     email_to, email_from, email_subject = email_to_from_subject(email_text)
-    lang = import_lang(email_to)
+    lang, email_reply_from = import_lang_pick_address(email_to, edward_config.hostname)
 
     replyinfo_obj = ReplyInfo()
     replyinfo_obj.replies = lang.replies
@@ -1082,31 +1082,41 @@ def email_to_from_subject (email_text):
     return email_to, email_from, email_subject
 
 
-def import_lang(email_to):
-    """Imports appropriate language file for basic i18n support
+def import_lang_pick_address(email_to, hostname):
+    """Imports language file for i18n support; makes reply from address
 
     The language imported depends on the To: address of the email received by
     edward. an -en ending implies the English language, whereas a -ja ending
     implies Japanese. The list of supported languages is listed in the 'langs'
-    list at the beginning of the program.
+    list at the beginning of the program. This function also chooses the
+    language-dependent address which can be used as the From address in the
+    reply email.
 
     Args:
         email_to: the string containing the email address that the mail was
-        sent to.
+            sent to.
+        hostname: the hostname part of the reply email's from address
 
     Returns:
         the reference to the imported language module. The only variable in
         this file is the 'replies' dictionary.
     """
 
-    lang_module = "lang.en"
+    # default
+    use_lang = "en"
 
     if email_to != None:
         for lang in langs:
             if "edward-" + lang in email_to:
-                lang_module = "lang." + re.sub('-', '_', lang)
+                use_lang = lang
+                break
 
-    return importlib.import_module(lang_module)
+    lang_mod_name = "lang." + re.sub('-', '_', use_lang)
+    lang_module = importlib.import_module(lang_mod_name)
+
+    email_reply_from = "edward-" + use_lang + "@" + hostname
+
+    return lang_module, email_reply_from
 
 
 def generate_encrypted_mime (plaintext, email_to, email_subject, encrypt_to_key,

@@ -28,5 +28,7 @@ Code sourced from these projects:
 gnupghome = "./tests/testgnupghome/"
 sign_with_key = "2470F96DB3CB20D2A39F89BA88611B2A4205FDDF"
 
+hostname = "localhost"
+
 debug = False
 
