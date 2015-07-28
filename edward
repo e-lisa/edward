@@ -36,6 +36,7 @@ import gpgme
 import re
 import io
 import os
+import enum
 import importlib
 
 import email.parser
@@ -53,12 +54,19 @@ langs = ["de", "el", "en", "fr", "ja", "pt-br", "ro", "ru", "tr"]
 """This list contains the abbreviated names of reply languages available to
 edward."""
 
+class TxtType (enum.Enum):
+    text        = 0
+    message     = 1
+    pubkey      = 2
+    detachedsig = 3
+    signature   = 4
 
-match_types =  [('message',
+
+match_types =  [(TxtType.message,
                 '-----BEGIN PGP MESSAGE-----.*?-----END PGP MESSAGE-----'),
-                ('pubkey',
+                (TxtType.pubkey,
                 '-----BEGIN PGP PUBLIC KEY BLOCK-----.*?-----END PGP PUBLIC KEY BLOCK-----'),
-                ('detachedsig',
+                (TxtType.detachedsig,
                 '-----BEGIN PGP SIGNATURE-----.*?-----END PGP SIGNATURE-----')]
 
 """This list of tuples matches query names with re.search() queries used
@@ -104,11 +112,11 @@ class PayloadPiece (object):
     Instances of this class are often strung together within one or more arrays
     pointed to by each instance of the EddyMsg class.
 
-    'piece_type' refers to a string whose value describes the content of
-    'string'.  Examples include "pubkey", for public keys, and "message", for
-    encrypted data (or armored signatures until they are known to be such.) The
-    names derive from the header and footer of each of these ascii-encoded gpg
-    blocks.
+    'piece_type' refers to an enum whose value describes the content of
+    'string'.  Examples include TxtType.pubkey, for public keys, and
+    TxtType.message, for encrypted data (or armored signatures until they are
+    known to be such.) Some of the names derive from the header and footer of
+    each of these ascii-encoded gpg blocks.
 
     'string' contains some string of text, such as non-GPG text, an encrypted
     block of text, a signature, or a public key.
@@ -369,7 +377,7 @@ def scan_and_split (payload_piece, match_type, pattern):
     """
 
     # don't try to re-split pieces containing gpg data
-    if payload_piece.piece_type != "text":
+    if payload_piece.piece_type != TxtType.text:
         return [payload_piece]
 
     flags = re.DOTALL | re.MULTILINE
@@ -430,7 +438,7 @@ def get_subpart_data (part):
         try:
             payload = PayloadPiece()
             payload.string = mime_decoded_bytes.decode(charset)
-            payload.piece_type = 'text'
+            payload.piece_type = TxtType.text
 
             obj.payload_pieces = [payload]
         except UnicodeDecodeError:
@@ -562,11 +570,11 @@ def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
 
     for piece in eddymsg_obj.payload_pieces:
 
-        if piece.piece_type == "text":
+        if piece.piece_type == TxtType.text:
             # don't transform the plaintext.
             pass
 
-        elif piece.piece_type == "message":
+        elif piece.piece_type == TxtType.message:
             (plaintext, sigs) = decrypt_block(piece.string, gpgme_ctx)
 
             if plaintext:
@@ -581,7 +589,7 @@ def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
             (plaintext, sigs) = verify_sig_message(piece.string, gpgme_ctx)
 
             if plaintext:
-                piece.piece_type = "signature"
+                piece.piece_type = TxtType.signature
                 piece.gpg_data = GPGData()
                 piece.gpg_data.sigs = sigs
                 # recurse!
@@ -589,14 +597,14 @@ def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
 
         # FIXME: consider handling pubkeys first, so that signatures can be
         # validated on freshly imported keys
-        elif piece.piece_type == "pubkey":
+        elif piece.piece_type == TxtType.pubkey:
             key_fps = add_gpg_key(piece.string, gpgme_ctx)
 
             if key_fps != []:
                 piece.gpg_data = GPGData()
                 piece.gpg_data.keys = key_fps
 
-        elif piece.piece_type == "detachedsig":
+        elif piece.piece_type == TxtType.detachedsig:
             for prev in prev_parts:
                 sig_fps = verify_detached_signature(piece.string, prev.payload_bytes, gpgme_ctx)
 
@@ -659,18 +667,18 @@ def prepare_for_reply_pieces (eddymsg_obj, replyinfo_obj):
     """
 
     for piece in eddymsg_obj.payload_pieces:
-        if piece.piece_type == "text":
+        if piece.piece_type == TxtType.text:
             # don't quote the plaintext part.
             pass
 
-        elif piece.piece_type == "message":
+        elif piece.piece_type == TxtType.message:
             prepare_for_reply_message(piece, replyinfo_obj)
 
-        elif piece.piece_type == "pubkey":
+        elif piece.piece_type == TxtType.pubkey:
             prepare_for_reply_pubkey(piece, replyinfo_obj)
 
-        elif (piece.piece_type == "detachedsig") \
-            or (piece.piece_type == "signature"):
+        elif (piece.piece_type == TxtType.detachedsig) \
+            or (piece.piece_type == TxtType.signature):
                     prepare_for_reply_sig(piece, replyinfo_obj)
 
 
@@ -678,7 +686,7 @@ def prepare_for_reply_message (piece, replyinfo_obj):
     """Helper function for prepare_for_reply()
 
     This function is called when the piece_type of a payload piece is
-    "message", or GPG Message block. This should be encrypted text. If the
+    TxtType.message, or GPG Message block. This should be encrypted text. If the
     encryted block is signed, a sig will be attached to .target_key unless
     there is already one there.
 
@@ -691,7 +699,7 @@ def prepare_for_reply_message (piece, replyinfo_obj):
         Nothing
 
     Pre:
-        the piece.payload_piece value should be "message".
+        the piece.payload_piece value should be TxtType.message.
 
     Post:
         replyinfo_obj gets updated with decryption status, signing status and a
@@ -731,7 +739,7 @@ def prepare_for_reply_pubkey (piece, replyinfo_obj):
         replyinfo_obj: a ReplyInfo object
 
     Pre:
-        piece.piece_type should be set to "pubkey".
+        piece.piece_type should be set to TxtType.pubkey .
 
     Post:
         replyinfo_obj has its fields updated.
@@ -756,7 +764,8 @@ def prepare_for_reply_sig (piece, replyinfo_obj):
         replyinfo_obj: a ReplyInfo object
 
     Pre:
-        piece.piece_type should be set to "signature", or "detachedsig".
+        piece.piece_type should be set to TxtType.signature, or
+        TxtType.detachedsig .
 
     Post:
         replyinfo_obj has its fields updated.
@@ -812,14 +821,14 @@ def flatten_decrypted_payloads (eddymsg_obj, replyinfo_obj, get_signed_part):
 
     for piece in eddymsg_obj.payload_pieces:
         if (get_signed_part):
-            if ((piece.piece_type == "detachedsig") \
-                    or (piece.piece_type == "signature")) \
+            if ((piece.piece_type == TxtType.detachedsig) \
+                    or (piece.piece_type == TxtType.signature)) \
                     and (piece.gpg_data != None):
                         flatten_decrypted_payloads(piece.gpg_data.plainobj, replyinfo_obj, False)
                         replyinfo_obj.target_key = piece.gpg_data.sigs[0]
                         break
         else:
-            if piece.piece_type == "text":
+            if piece.piece_type == TxtType.text:
                 replyinfo_obj.msg_to_quote += piece.string
 
 
