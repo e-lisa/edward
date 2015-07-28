@@ -62,7 +62,7 @@ class TxtType (enum.Enum):
     signature   = 4
 
 
-match_types =  [(TxtType.message,
+match_pairs =  [(TxtType.message,
                 '-----BEGIN PGP MESSAGE-----.*?-----END PGP MESSAGE-----'),
                 (TxtType.pubkey,
                 '-----BEGIN PGP PUBLIC KEY BLOCK-----.*?-----END PGP PUBLIC KEY BLOCK-----'),
@@ -357,7 +357,7 @@ def parse_mime(msg_struct):
     return eddymsg_obj
 
 
-def scan_and_split (payload_piece, match_type, pattern):
+def scan_and_split (payload_piece, match_name, pattern):
     """This splits the payloads of an EddyMsg object into GPG and text parts.
 
     An EddyMsg object's payload_pieces starts off as a list containing a single
@@ -367,7 +367,7 @@ def scan_and_split (payload_piece, match_type, pattern):
 
     Args:
         payload_piece: a single payload or a split part of a payload
-        match_type: the type of data to try to spit out from the payload piece
+        match_name: the type of data to try to spit out from the payload piece
         pattern: the search pattern to be used for finding that type of data
 
     Returns:
@@ -395,13 +395,13 @@ def scan_and_split (payload_piece, match_type, pattern):
 
         match                   = PayloadPiece()
         match.string            = matches.group('match')
-        match.piece_type        = match_type
+        match.piece_type        = match_name
 
         rest                    = PayloadPiece()
         rest.string             = matches.group('rest')
         rest.piece_type         = payload_piece.piece_type
 
-        more_pieces = scan_and_split(rest, match_type, pattern)
+        more_pieces = scan_and_split(rest, match_name, pattern)
         pieces = [beginning, match ] + more_pieces
 
     return pieces
@@ -495,11 +495,11 @@ def split_payloads (eddymsg_obj):
         The EddyMsg object's payloads are all split into GPG and non-GPG parts.
     """
 
-    for match_type in match_types:
-        do_to_eddys_pieces(split_payload_pieces, eddymsg_obj, match_type)
+    for match_pair in match_pairs:
+        do_to_eddys_pieces(split_payload_pieces, eddymsg_obj, match_pair)
 
 
-def split_payload_pieces (eddymsg_obj, match_type):
+def split_payload_pieces (eddymsg_obj, match_pair):
     """A helper function for split_payloads(); works on PayloadPiece objects.
 
     This function splits up PayloadPiece objects into multipe PayloadPiece
@@ -508,7 +508,7 @@ def split_payload_pieces (eddymsg_obj, match_type):
 
     Args:
         eddymsg_obj: a single-part EddyMsg object.
-        match_type: a tuple from the match_types list, which specifies a match
+        match_pair: a tuple from the match_pairs list, which specifies a match
             name and a match pattern.
 
     Returns:
@@ -520,10 +520,10 @@ def split_payload_pieces (eddymsg_obj, match_type):
 
     Post:
         The EddyMsg object's payload piece(s) are split into a list of pieces
-        if matches of the match_type are found.
+        if matches of the match_pair are found.
     """
 
-    (match_name, pattern) = match_type
+    (match_name, pattern) = match_pair
 
     new_pieces_list = []
     for piece in eddymsg_obj.payload_pieces:
