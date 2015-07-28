@@ -31,12 +31,12 @@ Code sourced from these projects:
   * http://www.physics.drexel.edu/~wking/code/python/send_pgp_mime
 """
 
-import sys
-import gpgme
 import re
 import io
 import os
+import sys
 import enum
+import gpgme
 import importlib
 
 import email.parser
