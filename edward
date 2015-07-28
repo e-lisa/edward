@@ -38,6 +38,7 @@ import sys
 import enum
 import gpgme
 import importlib
+import subprocess
 
 import email.parser
 import email.message
@@ -240,7 +241,7 @@ def main ():
         implied by the To: address in the original email.
     """
 
-    handle_args()
+    print_reply_only = handle_args()
 
     gpgme_ctx = get_gpg_context(edward_config.gnupghome,
                               edward_config.sign_with_key)
@@ -249,7 +250,7 @@ def main ():
     email_struct = parse_pgp_mime(email_text, gpgme_ctx)
 
     email_to, email_from, email_subject = email_to_from_subject(email_text)
-    lang, email_reply_from = import_lang_pick_address(email_to, edward_config.hostname)
+    lang, reply_from = import_lang_pick_address(email_to, edward_config.hostname)
 
     replyinfo_obj = ReplyInfo()
     replyinfo_obj.replies = lang.replies
@@ -262,7 +263,10 @@ def main ():
                                          email_subject, encrypt_to_key,
                                          gpgme_ctx)
 
-    print(reply_mime)
+    if print_reply_only == True:
+        print(reply_mime)
+    else:
+        send_reply(reply_mime, email_subject, email_from, reply_from)
 
 
 def get_gpg_context (gnupghome, sign_with_key_fp):
@@ -1114,9 +1118,9 @@ def import_lang_pick_address(email_to, hostname):
     lang_mod_name = "lang." + re.sub('-', '_', use_lang)
     lang_module = importlib.import_module(lang_mod_name)
 
-    email_reply_from = "edward-" + use_lang + "@" + hostname
+    reply_from = "edward-" + use_lang + "@" + hostname
 
-    return lang_module, email_reply_from
+    return lang_module, reply_from
 
 
 def generate_encrypted_mime (plaintext, email_to, email_subject, encrypt_to_key,
@@ -1184,6 +1188,20 @@ def generate_encrypted_mime (plaintext, email_to, email_subject, encrypt_to_key,
     reply = message_mime.as_string()
 
     return reply
+
+
+def send_reply(email_txt, subject, reply_to, reply_from):
+
+    email_bytes = email_txt.encode('ascii')
+
+    p = subprocess.Popen(["/usr/sbin/sendmail", "-f", reply_from, "-F", "Edward, GPG Bot", "-i", reply_to], stdin=subprocess.PIPE)
+
+    (stdout, stderr) = p.communicate(email_bytes)
+
+    if stdout != None:
+        debug("sendmail stdout: " + str(stdout))
+    if stderr != None:
+        error("sendmail stderr: " + str(stderr))
 
 
 def email_quote_text (text):
@@ -1291,29 +1309,39 @@ def debug (debug_msg):
 
 
 def handle_args ():
-    """Sets the progname variable and complains about any arguments
+    """Sets the progname variable and processes optional argument
 
-    If there are any arguments, then edward complains and quits, because input
-    is read from stdin.
+    If there are more than two arguments then edward complains and quits. An
+    single "-p" argument sets the print_reply_only option, which makes edward
+    print email replies instead of mailing them.
 
     Args:
         None
 
     Returns:
-        None
+        True if edward should print arguments instead of mailing them,
+        otherwise it returns False.
 
     Post:
-        Exits with error 1 if there are arguments, otherwise returns to the
-        calling function, such as main().
+        Exits with error 1 if there are more than two arguments, otherwise
+        returns the print_reply_only option.
     """
 
     global progname
     progname = sys.argv[0]
 
-    if len(sys.argv) > 1:
-        print(progname + ": error, this program doesn't " \
-                "need any arguments.", file=sys.stderr)
+    print_reply_only = False
+
+    if len(sys.argv) > 2:
+        print(progname + " usage:  " + progname + " [-p]\n\n" \
+                + "        -p      print reply message to stdout, do not mail it\n", \
+                file=sys.stderr)
         exit(1)
+
+    elif (len(sys.argv) == 2) and (sys.argv[1] == "-p"):
+        print_reply_only = True
+
+    return print_reply_only
 
 
 if __name__ == "__main__":

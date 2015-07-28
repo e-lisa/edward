@@ -58,6 +58,7 @@ function _run_test_type {
     TESTS_DIR="$SCRIPT_DIR/tests"
     G_HOME="$TESTS_DIR/testgnupghome"
     EDWARD="$SCRIPT_DIR/edward"
+    EDWARD_OPT="-p"
     FLATTEN_MIME="$TESTS_DIR/flatten-mime"
 
     ERROR_COUNT="0"
@@ -72,7 +73,7 @@ function _run_test_type {
             continue
         fi
 
-        ERROR="$("_exec_$TEST_TYPE" "$TEST_NAME" "$G_HOME" "$EDWARD" "$FLATTEN_MIME" "$TEST_INPUT" "$TEST_OUTPUT")"
+        ERROR="$("_exec_$TEST_TYPE" "$TEST_NAME" "$G_HOME" "$EDWARD" "$EDWARD_OPT" "$FLATTEN_MIME" "$TEST_INPUT" "$TEST_OUTPUT")"
 
         ERROR_COUNT="$(expr "$ERROR_COUNT" + "$ERROR")"
 
@@ -86,11 +87,12 @@ function _exec_gpg-flatten {
     TEST_NAME="$1"
     G_HOME="$2"
     TEST_EXEC_1="$3"
-    TEST_EXEC_2="$4"
-    TEST_INPUT="$5"
-    TEST_OUTPUT="$6"
+    TEST_EXEC_1_OPT="$4"
+    TEST_EXEC_2="$5"
+    TEST_INPUT="$6"
+    TEST_OUTPUT="$7"
 
-    PROGRAM_OUT="$(time "$TEST_EXEC_1" < "$TEST_INPUT" | GNUPGHOME="$G_HOME" gpg 2> /dev/null | "$TEST_EXEC_2" )"
+    PROGRAM_OUT="$(time "$TEST_EXEC_1" "$TEST_EXEC_1_OPT" < "$TEST_INPUT" | GNUPGHOME="$G_HOME" gpg 2> /dev/null | "$TEST_EXEC_2" )"
 
     ERROR="$(_diff "$TEST_NAME" "$TEST_OUTPUT" "$PROGRAM_OUT")"
 
@@ -101,11 +103,12 @@ function _exec_flatten {
 
     TEST_NAME="$1"
     TEST_EXEC_1="$3"
-    TEST_EXEC_2="$4"
-    TEST_INPUT="$5"
-    TEST_OUTPUT="$6"
+    TEST_EXEC_1_OPT="$4"
+    TEST_EXEC_2="$5"
+    TEST_INPUT="$6"
+    TEST_OUTPUT="$7"
 
-    PROGRAM_OUT="$(time "$TEST_EXEC_1" < "$TEST_INPUT" | "$TEST_EXEC_2" )"
+    PROGRAM_OUT="$(time "$TEST_EXEC_1" "$TEST_EXEC_1_OPT" < "$TEST_INPUT" | "$TEST_EXEC_2" )"
 
     ERROR="$(_diff "$TEST_NAME" "$TEST_OUTPUT" "$PROGRAM_OUT")"
 
@@ -116,10 +119,11 @@ function _exec_plain {
 
     TEST_NAME="$1"
     TEST_EXEC_1="$3"
-    TEST_INPUT="$5"
-    TEST_OUTPUT="$6"
+    TEST_EXEC_1_OPT="$4"
+    TEST_INPUT="$6"
+    TEST_OUTPUT="$7"
 
-    PROGRAM_OUT="$(time "$TEST_EXEC_1" < "$TEST_INPUT" )"
+    PROGRAM_OUT="$(time "$TEST_EXEC_1" "$TEST_EXEC_1_OPT" < "$TEST_INPUT" )"
 
     ERROR="$(_diff "$TEST_NAME" "$TEST_OUTPUT" "$PROGRAM_OUT")"
 
