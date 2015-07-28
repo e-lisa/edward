@@ -1090,15 +1090,14 @@ def import_lang(email_to):
         this file is the 'replies' dictionary.
     """
 
+    lang_module = "lang.en"
+
     if email_to != None:
         for lang in langs:
             if "edward-" + lang in email_to:
-                lang = "lang." + re.sub('-', '_', lang)
-                language = importlib.import_module(lang)
+                lang_module = "lang." + re.sub('-', '_', lang)
 
-                return language
-
-    return importlib.import_module("lang.en")
+    return importlib.import_module(lang_module)
 
 
 def generate_encrypted_mime (plaintext, email_to, email_subject, encrypt_to_key,
