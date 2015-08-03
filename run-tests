@@ -17,8 +17,7 @@
 # Copyright (C) 2015 Andrew Engelbrecht                     (AGPLv3+)    *
 #*************************************************************************
 
-NUM_TESTS=1
-#TEST_TYPES="gpg-flatten flatten plain"
+#TEST_TYPES="gpg-flatten flatten gpg-plain"
 TEST_TYPES="gpg-flatten flatten"
 
 function _main {
@@ -99,6 +98,22 @@ function _exec_gpg-flatten {
     echo "$ERROR"
 }
 
+function _exec_gpg-plain {
+
+    TEST_NAME="$1"
+    G_HOME="$2"
+    TEST_EXEC_1="$3"
+    TEST_EXEC_1_OPT="$4"
+    TEST_INPUT="$6"
+    TEST_OUTPUT="$7"
+
+    PROGRAM_OUT="$(time "$TEST_EXEC_1" "$TEST_EXEC_1_OPT" < "$TEST_INPUT" | GNUPGHOME="$G_HOME" gpg 2> /dev/null )"
+
+    ERROR="$(_diff "$TEST_NAME" "$TEST_OUTPUT" "$PROGRAM_OUT")"
+
+    echo "$ERROR"
+}
+
 function _exec_flatten {
 
     TEST_NAME="$1"
@@ -109,21 +124,6 @@ function _exec_flatten {
     TEST_OUTPUT="$7"
 
     PROGRAM_OUT="$(time "$TEST_EXEC_1" "$TEST_EXEC_1_OPT" < "$TEST_INPUT" | "$TEST_EXEC_2" )"
-
-    ERROR="$(_diff "$TEST_NAME" "$TEST_OUTPUT" "$PROGRAM_OUT")"
-
-    echo "$ERROR"
-}
-
-function _exec_plain {
-
-    TEST_NAME="$1"
-    TEST_EXEC_1="$3"
-    TEST_EXEC_1_OPT="$4"
-    TEST_INPUT="$6"
-    TEST_OUTPUT="$7"
-
-    PROGRAM_OUT="$(time "$TEST_EXEC_1" "$TEST_EXEC_1_OPT" < "$TEST_INPUT" )"
 
     ERROR="$(_diff "$TEST_NAME" "$TEST_OUTPUT" "$PROGRAM_OUT")"
 
