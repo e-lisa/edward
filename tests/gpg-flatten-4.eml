@@ -1,41 +1,43 @@
 From: No One <noone@localhost>
-To: No One <noone@localhost>
+MIME-Version: 1.0
+To: No One <edward-ja@localhost>
 Subject: =?UTF-8?B?44GT44KT44Gr44Gh44Gv44CB44GK5YWD5rCX44Gn44GZ44GL77yf?=
+Content-Type: multipart/encrypted;
+ protocol="application/pgp-encrypted";
+ boundary="x2iAciceo0NrKsl4uFVFGTgJ6k0ocg8FW"
 
-DO YOU READ ME CAPTAIN??!!1 o_O
+This is an OpenPGP/MIME encrypted message (RFC 4880 and 3156)
+--x2iAciceo0NrKsl4uFVFGTgJ6k0ocg8FW
+Content-Type: application/pgp-encrypted
+Content-Description: PGP/MIME version identification
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+Version: 1
 
-hi, i didn't encrypt this part. is that a mistake?
-
-bye!
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iJwEAQECAAYFAlWthWEACgkQsT5tL2pPbuhyWgQApzhIt4EM4FrqCibNI7ZS1V73
-yhml95bw5PXq2fB7wU2I4pkM30T2kpMxdtfHdPXHQSzvuo27IhrUOH7CUtvj0f23
-CllwAGoUmwmdXOLeVvgjwyPzSVAdWLO8/231fS1M8J42v8GV6w78hmq+/Cck2oQE
-p4/91AVSikY7bwMrGpU=
-=Tavv
------END PGP SIGNATURE-----
+--x2iAciceo0NrKsl4uFVFGTgJ6k0ocg8FW
+Content-Type: application/octet-stream; name="encrypted.asc"
+Content-Description: OpenPGP encrypted message
+Content-Disposition: inline; filename="encrypted.asc"
 
 -----BEGIN PGP MESSAGE-----
 Version: GnuPG v1
 
-hIwDWouAYlp2iv8BBADAXsI9Y/miNCVnseKDNZVil3VK3SUbJ4DYoVDVcymcStUw
-+bmk3XSk5hqap3CfSKdSvdnxSmaKzYOdpv03kiRtK2gjnakcKxk4pGz85UM5t8ZZ
-3estj/Ca40kvSHZAYelgC1W8JshDOyOrS93acfUgJxKQMdxhGRjVAW1YbQWFyNLA
-3QEJJeg6obNktEbhXCSlupZFAKJQgdAPDOWYgNeFnTkS4MttM+G0ABx/o8JjeIl5
-wYDucFBDHXSuld9RBzQ1QLOUhB8BOkCq6XFgwaaTKTBT7SQ19n0G8RpZmJ/BX5Ok
-msi9nlRm9z6Irjtx9bDudzUfpCzO/YeYBN1J/1o3pw8f/otzOMfRHBStkdo0V9i5
-9JS77QRkSnM4hVrZuvfplYa5iRftdYehLMaMk7k9gOY+B5WEMdgV9ZWRrWOXmqTK
-NyB1fIWgKNEqCgZnBFPS6Es6kUXUNnFvsvFMPg5WXx+HBJ3YqhNzsdVegagxjE9F
-wi7qHlcHbRGFv7Zz+BsiPQ3M3tQgwBAd1c/d/6CIdZDArvsTZiSdkszpfeziVj2p
-ZKhWUBUIpqP59MMlftD19EFTtJm8mpc/gBH074nEwzXdLFKg08Vb5fH2zMRo37w4
-HZzUHFJaj8VMIjQPRXqD6ELclHJbO7ASTyh8S+v9Iv+t4PpJXn8odwAm08bd//e9
-Ch/H9RAlS/22W4KlpZdIvwz7JmwVE9T4Xq1e22Df
-=Sn5u
+hIwDWouAYlp2iv8BBAC+TPb/Fdoye+wORbVhPNslOQo829IK2nhRYkVcxouDoRQP
+M+q6vI0RMqwobFCqsyK6LIutS3JAqHIB7tsl//MN3hHUcIiF4ZgsyPpX+wazLMCp
+XFapg0WsuJjnBi5h0ugkpg/B4HuyiPYYIoH1wxCwp449MZzGHLmIMG02JlmiQtLp
+AV50UCk6OUoclVbJhpz6vttUxPPihTuVSTHGVJA25S3yF5Z2TTTosA5hwcEEN8/R
+fZ/cgYE88ewXcuo9/vYnXnQUGOzbEtFJ9g2wdnEpf0XzKgm60KcZCNXbDfHF9X9X
+BrimYlfjjaQ+vL7LEfEinhxZLbdu/yA5ej/colSP7IkefUVOE1J8mW2zmO5vNoRT
+mYj0T66+grP7ILPy+T68eY7pWaCoUWNqTQULyAfAyYpEmb6SBw/qtq0ZWVgAuIwM
++sA5vVgKDeb6+Rntesjs7YwIqKzp0LP/u/Dn+jp6D+3njltrkp/zhMUX2PL97CH7
+v9kZbwcxFFqjOvdtFn4bbHa+F1CjS6MakGDG8H609VtdL7vee7goaM9+PUCNYFur
+DOsEW0ML8a5gLNFzIScZTxsNwretctsJWu3TkVD+wY1UcqD/h4yIuKF7ZuJOGcW0
+CkxJ6U9OZsFgPzGqpLY3+Q/zb1Z0Tipex0FuKTw6gCpK9gieJKw04ZUFb7MuYPrj
+xSCY7ruJiHRz5Vby8a2uQMisjs8ajXtkzinfRRQe7vQd8WJGKBs5pUe+7kLgBhx+
+xI5oHuAQ3SkmdMjhFSQ7idgl+MV+7TVLBx96qdxfUhSw65uW2TySPkBpM1JDxU6A
+4hDENnhdBM6/o6JDbClGjVLCN1vgvBAZ8ToOShXOZ1AulZu2sazolhwzvEMzkQyH
+gURIeMRulCLM1ufflHaKzDFBOP24gK1Zl+B7g5BDvg==
+=Hetx
 -----END PGP MESSAGE-----
+
+--x2iAciceo0NrKsl4uFVFGTgJ6k0ocg8FW--
 
