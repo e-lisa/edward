@@ -933,6 +933,7 @@ def write_reply (replyinfo_obj):
 
     reply_plain += "\n\n"
     reply_plain += replyinfo_obj.replies['signature']
+    reply_plain += "\n"
 
     return reply_plain
 
