@@ -928,7 +928,7 @@ def write_reply (replyinfo_obj):
         reply_plain += "\n\n"
         reply_plain += replyinfo_obj.replies['sig_success']
 
-    elif replyinfo_obj.sig_failure == True:
+    else:
         reply_plain += "\n\n"
         reply_plain += replyinfo_obj.replies['sig_failure']
 
