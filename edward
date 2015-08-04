@@ -1016,7 +1016,7 @@ def verify_sig_message (msg_block, gpgme_ctx):
     sig_failure = False
     fingerprints = []
     for sig in sigs:
-        if (sig.summary & gpgme.SIGSUM_VALID != 0) or (sig.summary & gpgme.SIGSUM_GREEN != 0):
+        if (sig.summary == 0) or (sig.summary & gpgme.SIGSUM_VALID != 0) or (sig.summary & gpgme.SIGSUM_GREEN != 0):
             fingerprints += [sig.fpr]
         else:
             sig_failure = True
@@ -1052,7 +1052,7 @@ def verify_detached_signature (detached_sig, plaintext_bytes, gpgme_ctx):
     sig_failure = False
     sig_fingerprints = []
     for res_ in result:
-        if (res_.summary & gpgme.SIGSUM_VALID != 0) or (res_.summary & gpgme.SIGSUM_GREEN != 0):
+        if (res_.summary == 0) or (res_.summary & gpgme.SIGSUM_VALID != 0) or (res_.summary & gpgme.SIGSUM_GREEN != 0):
             sig_fingerprints += [res_.fpr]
         else:
             sig_failure = True
@@ -1088,7 +1088,7 @@ def decrypt_block (msg_block, gpgme_ctx):
     sig_failure = False
     fingerprints = []
     for sig in sigs:
-        if (sig.summary & gpgme.SIGSUM_VALID != 0) or (sig.summary & gpgme.SIGSUM_GREEN != 0):
+        if (sig.summary == 0) or (sig.summary & gpgme.SIGSUM_VALID != 0) or (sig.summary & gpgme.SIGSUM_GREEN != 0):
             fingerprints += [sig.fpr]
         else:
             sig_failure = True
