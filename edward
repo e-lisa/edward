@@ -146,6 +146,8 @@ class GPGData (object):
 
     'sigs' is a list of fingerprints of keys used to sign the data in plainobj.
 
+    'sig_failure' is a boolean noting whether any signatures failed to verify.
+
     'keys' is a list of fingerprints of keys obtained in public key blocks.
     """
 
@@ -153,6 +155,7 @@ class GPGData (object):
 
     plainobj                = None
     sigs                    = []
+    sig_failure             = False
     keys                    = []
 
 
@@ -580,23 +583,25 @@ def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
             pass
 
         elif piece.piece_type == TxtType.message:
-            (plaintext, sigs) = decrypt_block(piece.string, gpgme_ctx)
+            (plaintext, sigs, sig_failure) = decrypt_block(piece.string, gpgme_ctx)
 
             if plaintext:
                 piece.gpg_data = GPGData()
                 piece.gpg_data.decrypted = True
                 piece.gpg_data.sigs = sigs
+                piece.gpg_data.sig_failure = sig_failure
                 # recurse!
                 piece.gpg_data.plainobj = parse_pgp_mime(plaintext, gpgme_ctx)
                 continue
 
             # if not encrypted, check to see if this is an armored signature.
-            (plaintext, sigs) = verify_sig_message(piece.string, gpgme_ctx)
+            (plaintext, sigs, sig_failure) = verify_sig_message(piece.string, gpgme_ctx)
 
             if plaintext:
                 piece.piece_type = TxtType.signature
                 piece.gpg_data = GPGData()
                 piece.gpg_data.sigs = sigs
+                piece.gpg_data.sig_failure = sig_failure
                 # recurse!
                 piece.gpg_data.plainobj = parse_pgp_mime(plaintext, gpgme_ctx)
 
@@ -609,11 +614,12 @@ def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
 
         elif piece.piece_type == TxtType.detachedsig:
             for prev in prev_parts:
-                sig_fps = verify_detached_signature(piece.string, prev.payload_bytes, gpgme_ctx)
+                (sig_fps, sig_failure) = verify_detached_signature(piece.string, prev.payload_bytes, gpgme_ctx)
 
                 if sig_fps != []:
                     piece.gpg_data = GPGData()
                     piece.gpg_data.sigs = sig_fps
+                    piece.gpg_data.sig_failure = sig_failure
                     piece.gpg_data.plainobj = prev
                     break
 
@@ -689,9 +695,9 @@ def prepare_for_reply_message (piece, replyinfo_obj):
     """Helper function for prepare_for_reply()
 
     This function is called when the piece_type of a payload piece is
-    TxtType.message, or GPG Message block. This should be encrypted text. If the
-    encryted block is signed, a sig will be attached to .target_key unless
-    there is already one there.
+    TxtType.message, or GPG Message block. This should be encrypted text. If
+    the encryted block is correclty signed, a sig will be attached to
+    .target_key unless there is already one there.
 
     Args:
         piece: a PayloadPiece object.
@@ -724,6 +730,9 @@ def prepare_for_reply_message (piece, replyinfo_obj):
         replyinfo_obj.sig_success = True
         get_signed_part = False
     else:
+        if piece.gpg_data.sig_failure == True:
+            replyinfo_obj.sig_failure = True
+
         # only include a signed message in the reply.
         get_signed_part = True
 
@@ -779,6 +788,9 @@ def prepare_for_reply_sig (piece, replyinfo_obj):
         replyinfo_obj.sig_failure = True
     else:
         replyinfo_obj.sig_success = True
+
+        if piece.gpg_data.sig_failure == True:
+            replyinfo_obj.sig_failure = True
 
         if replyinfo_obj.fallback_target_key == None:
             replyinfo_obj.fallback_target_key = piece.gpg_data.sigs[0]
@@ -984,8 +996,9 @@ def verify_sig_message (msg_block, gpgme_ctx):
         gpgme_ctx: the gpgme context
 
     Returns:
-        A tuple of the plaintext of the signed part and the list of
-        fingerprints of keys signing the data. If verification failed, perhaps
+        A tuple containing the plaintext of the signed part, the list of
+        fingerprints of keys signing the data, and a boolean marking whether
+        there were any invalid signatures. If verification failed, perhaps
         because the message was also encrypted, then empty results are
         returned.
     """
@@ -996,14 +1009,19 @@ def verify_sig_message (msg_block, gpgme_ctx):
     try:
         sigs = gpgme_ctx.verify(block_b, None, plain_b)
     except gpgme.GpgmeError:
-        return ("",[])
+        return ("",[],True)
 
     plaintext = plain_b.getvalue().decode('utf-8')
 
+    sig_failure = False
     fingerprints = []
     for sig in sigs:
-        fingerprints += [sig.fpr]
-    return (plaintext, fingerprints)
+        if (sig.summary & gpgme.SIGSUM_VALID != 0) or (sig.summary & gpgme.SIGSUM_GREEN != 0):
+            fingerprints += [sig.fpr]
+        else:
+            sig_failure = True
+
+    return (plaintext, fingerprints, sig_failure)
 
 
 def verify_detached_signature (detached_sig, plaintext_bytes, gpgme_ctx):
@@ -1017,8 +1035,10 @@ def verify_detached_signature (detached_sig, plaintext_bytes, gpgme_ctx):
         gpgme_ctx: the gpgme context
 
     Returns:
-        A list of signing fingerprints if the signature verification was
-        sucessful. Otherwise, an empty list is returned.
+        A tuple containging a list of signing fingerprints if the signature
+        verification was sucessful, and a boolean noting whether there were any
+        failed signature validations. Otherwise, a tuple containing an empty
+        list and True are returned.
     """
 
     detached_sig_fp = io.BytesIO(detached_sig.encode('ascii'))
@@ -1027,17 +1047,21 @@ def verify_detached_signature (detached_sig, plaintext_bytes, gpgme_ctx):
     try:
         result = gpgme_ctx.verify(detached_sig_fp, plaintext_fp, None)
     except gpgme.GpgmeError:
-        return []
+        return ([],True)
 
+    sig_failure = False
     sig_fingerprints = []
     for res_ in result:
-        sig_fingerprints += [res_.fpr]
+        if (res_.summary & gpgme.SIGSUM_VALID != 0) or (res_.summary & gpgme.SIGSUM_GREEN != 0):
+            sig_fingerprints += [res_.fpr]
+        else:
+            sig_failure = True
 
-    return sig_fingerprints
+    return (sig_fingerprints, sig_failure)
 
 
 def decrypt_block (msg_block, gpgme_ctx):
-    """Decrypts a block of GPG text, and verifies any included sigatures.
+    """Decrypts a block of GPG text and verifies any included sigatures.
 
     Some encypted messages have embeded signatures, so those are verified too.
 
@@ -1046,8 +1070,9 @@ def decrypt_block (msg_block, gpgme_ctx):
         gpgme_ctx: the gpgme context
 
     Returns:
-        A tuple of plaintext and signatures, if the decryption and signature
-        verification were successful, respectively.
+        A tuple containing plaintext, signatures (if the decryption and
+        signature verification were successful, respectively), and a boolean
+        noting whether there were signatures that could not be validated.
     """
 
     block_b = io.BytesIO(msg_block.encode('ascii'))
@@ -1056,14 +1081,19 @@ def decrypt_block (msg_block, gpgme_ctx):
     try:
         sigs = gpgme_ctx.decrypt_verify(block_b, plain_b)
     except gpgme.GpgmeError:
-        return ("",[])
+        return ("",[],True)
 
     plaintext = plain_b.getvalue().decode('utf-8')
 
+    sig_failure = False
     fingerprints = []
     for sig in sigs:
-        fingerprints += [sig.fpr]
-    return (plaintext, fingerprints)
+        if (sig.summary & gpgme.SIGSUM_VALID != 0) or (sig.summary & gpgme.SIGSUM_GREEN != 0):
+            fingerprints += [sig.fpr]
+        else:
+            sig_failure = True
+
+    return (plaintext, fingerprints, sig_failure)
 
 
 def email_to_from_subject (email_text):
