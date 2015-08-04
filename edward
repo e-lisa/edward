@@ -916,7 +916,7 @@ def write_reply (replyinfo_obj):
     if replyinfo_obj.success_decrypt == True:
         reply_plain += replyinfo_obj.replies['success_decrypt']
 
-        if replyinfo_obj.no_public_key == False:
+        if (replyinfo_obj.sig_success == True) and (replyinfo_obj.no_public_key == False):
             quoted_text = email_quote_text(replyinfo_obj.msg_to_quote)
             reply_plain += quoted_text
 
