@@ -721,6 +721,7 @@ def prepare_for_reply_message (piece, replyinfo_obj):
 
     if piece.gpg_data.sigs != []:
         replyinfo_obj.target_key = piece.gpg_data.sigs[0]
+        replyinfo_obj.sig_success = True
         get_signed_part = False
     else:
         # only include a signed message in the reply.
