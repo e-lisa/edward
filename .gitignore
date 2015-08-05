@@ -4,3 +4,5 @@
 tests/testgnupghome/random_seed
 __pycache__
 
+edward_config.py
+
