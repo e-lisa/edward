@@ -178,6 +178,8 @@ class ReplyInfo (object):
     unencrypted data; alternatively it may be a public key attached to the
     message.
 
+    'encrypt_to_key' the key object to use when encrypting edward's reply
+
     'msg_to_quote' refers to the part of a message which edward should quote in
     his reply. This should remain as None if there was no encrypted and singed
     part. This is to avoid making edward a service for decrypting other
@@ -206,6 +208,7 @@ class ReplyInfo (object):
 
     target_key              = None
     fallback_target_key     = None
+    encrypt_to_key          = None
     msg_to_quote            = ""
 
     success_decrypt         = False
@@ -260,11 +263,11 @@ def main ():
     replyinfo_obj.replies = lang.replies
 
     prepare_for_reply(email_struct, replyinfo_obj)
-    encrypt_to_key = get_key_from_fp(replyinfo_obj, gpgme_ctx)
+    get_key_from_fp(replyinfo_obj, gpgme_ctx)
     reply_plaintext = write_reply(replyinfo_obj)
 
     reply_mime = generate_encrypted_mime(reply_plaintext, email_from, \
-                                         email_subject, encrypt_to_key,
+                                         email_subject, replyinfo_obj.encrypt_to_key,
                                          gpgme_ctx)
 
     if print_reply_only == True:
@@ -851,7 +854,8 @@ def flatten_decrypted_payloads (eddymsg_obj, replyinfo_obj, get_signed_part):
 def get_key_from_fp (replyinfo_obj, gpgme_ctx):
     """Obtains a public key object from a key fingerprint
 
-    If the .target_key is not set, then we use .fallback_target_key.
+    If the .target_key is not set, then we use .fallback_target_key, if
+    available.
 
     Args:
         replyinfo_obj: ReplyInfo instance
@@ -868,29 +872,22 @@ def get_key_from_fp (replyinfo_obj, gpgme_ctx):
         previously sent to edward.
 
     Post:
-        If the key cannot be loaded, then the replyinfo_obj is marked for
-        having no public key available.
+        If the key can be loaded, then replyinfo_obj.reply_to_key points to the
+        public key object.  If the key cannot be loaded, then the replyinfo_obj
+        is marked as having no public key available.
     """
 
-    if replyinfo_obj.target_key == None:
-        replyinfo_obj.target_key = replyinfo_obj.fallback_target_key
+    for key in (replyinfo_obj.target_key, replyinfo_obj.fallback_target_key):
+        if key != None:
+            try:
+                encrypt_to_key = gpgme_ctx.get_key(key)
+                replyinfo_obj.encrypt_to_key = encrypt_to_key
+                return
 
-    if replyinfo_obj.target_key != None:
-        try:
-            encrypt_to_key = gpgme_ctx.get_key(replyinfo_obj.target_key)
-            return encrypt_to_key
-
-        except gpgme.GpgmeError:
-            pass
-
-    # no available key to use
-    replyinfo_obj.target_key = None
-    replyinfo_obj.fallback_target_key = None
+            except gpgme.GpgmeError:
+                pass
 
     replyinfo_obj.no_public_key = True
-    replyinfo_obj.public_key_received = False
-
-    return None
 
 
 def write_reply (replyinfo_obj):
@@ -916,7 +913,7 @@ def write_reply (replyinfo_obj):
     if replyinfo_obj.success_decrypt == True:
         reply_plain += replyinfo_obj.replies['success_decrypt']
 
-        if (replyinfo_obj.sig_success == True) and (replyinfo_obj.no_public_key == False):
+        if (replyinfo_obj.sig_success == True) and (replyinfo_obj.encrypt_to_key != None):
             quoted_text = email_quote_text(replyinfo_obj.msg_to_quote)
             reply_plain += quoted_text
 
@@ -933,13 +930,13 @@ def write_reply (replyinfo_obj):
         reply_plain += replyinfo_obj.replies['sig_failure']
 
 
-    if replyinfo_obj.public_key_received == True:
-        reply_plain += "\n\n"
-        reply_plain += replyinfo_obj.replies['public_key_received']
-
-    elif replyinfo_obj.no_public_key == True:
+    if replyinfo_obj.no_public_key == True:
         reply_plain += "\n\n"
         reply_plain += replyinfo_obj.replies['no_public_key']
+
+    elif replyinfo_obj.public_key_received == True:
+        reply_plain += "\n\n"
+        reply_plain += replyinfo_obj.replies['public_key_received']
 
 
     reply_plain += "\n\n"
