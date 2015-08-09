@@ -21,7 +21,7 @@
 *********************************************************************"""
 
 replies = {
-    'success_decrypt' : "Hello, I am Edward, the friendly GnuPG bot. I received your message and decrypted it. Here's a copy of your message:\n\n",
+    'success_decrypt' : "Hello, I am Edward, the friendly GnuPG bot. I received your message and decrypted it. Here's a copy of your message:",
     'public_key_received' : 'I received your public key. Thanks.',
     'failed_decrypt' : "I'm sorry, I was not able to decrypt your message. Are you sure you encrypted it with my public key?",
     'no_public_key' : "I'm sorry, I was not able to find your public key. Did you remember to attach it?",

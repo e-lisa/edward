@@ -146,7 +146,8 @@ class GPGData (object):
 
     'sigs' is a list of fingerprints of keys used to sign the data in plainobj.
 
-    'sig_failure' is a boolean noting whether any signatures failed to verify.
+    'sigkey_missing' is set to True if edward doesn't have the key it needs to
+    verify the signature on a block of text.
 
     'keys' is a list of fingerprints of keys obtained in public key blocks.
     """
@@ -155,7 +156,7 @@ class GPGData (object):
 
     plainobj                = None
     sigs                    = []
-    sig_failure             = False
+    sigkey_missing          = False
     keys                    = []
 
 
@@ -185,23 +186,20 @@ class ReplyInfo (object):
     part. This is to avoid making edward a service for decrypting other
     people's messages to edward.
 
-    'success_decrypt' is set to True if edward could decrypt part of the
+    'decrypt_success' is set to True if edward could decrypt part of the
     message.
-
-    'failed_decrypt' is set to True if edward failed to decrypt part of the
-    message.
-
-    'publick_key_received' is set to True if edward successfully imported a
-    public key.
-
-    'no_public_key' is set to True if edward doesn't have a key to encrypt to
-    when replying to the user.
 
     'sig_success' is set to True if edward could to some extent verify the
     signature of a signed part of the message to edward.
 
-    'sig_failure' is set to True if edward failed to some extent verify the
-    signature of a signed part of the message to edward.
+    'pubkey_success' is set to True if edward successfully imported a public
+    key.
+
+    'sigkey_missing' is set to True if edward doesn't have the public key
+    needed for signature verification.
+
+    'have_repy_key' is set to True if edward has a public key to encrypt its
+    reply to.
     """
 
     replies                 = None
@@ -211,12 +209,12 @@ class ReplyInfo (object):
     encrypt_to_key          = None
     msg_to_quote            = ""
 
-    success_decrypt         = False
-    failed_decrypt          = False
-    public_key_received     = False
-    no_public_key           = False
+    decrypt_success         = False
     sig_success             = False
-    sig_failure             = False
+    pubkey_success          = False
+
+    sigkey_missing          = False
+    have_reply_key          = False
 
 
 def main ():
@@ -586,25 +584,27 @@ def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
             pass
 
         elif piece.piece_type == TxtType.message:
-            (plaintext, sigs, sig_failure) = decrypt_block(piece.string, gpgme_ctx)
+            piece.gpg_data = GPGData()
+
+            (plaintext, sigs, sigkey_missing) = decrypt_block(piece.string, gpgme_ctx)
+
+            piece.gpg_data.sigkey_missing = sigkey_missing
 
             if plaintext:
-                piece.gpg_data = GPGData()
                 piece.gpg_data.decrypted = True
                 piece.gpg_data.sigs = sigs
-                piece.gpg_data.sig_failure = sig_failure
                 # recurse!
                 piece.gpg_data.plainobj = parse_pgp_mime(plaintext, gpgme_ctx)
                 continue
 
             # if not encrypted, check to see if this is an armored signature.
-            (plaintext, sigs, sig_failure) = verify_sig_message(piece.string, gpgme_ctx)
+            (plaintext, sigs,  sigkey_missing) = verify_sig_message(piece.string, gpgme_ctx)
+
+            piece.gpg_data.sigkey_missing = sigkey_missing
 
             if plaintext:
                 piece.piece_type = TxtType.signature
-                piece.gpg_data = GPGData()
                 piece.gpg_data.sigs = sigs
-                piece.gpg_data.sig_failure = sig_failure
                 # recurse!
                 piece.gpg_data.plainobj = parse_pgp_mime(plaintext, gpgme_ctx)
 
@@ -616,13 +616,15 @@ def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
                 piece.gpg_data.keys = key_fps
 
         elif piece.piece_type == TxtType.detachedsig:
+            piece.gpg_data = GPGData()
+
             for prev in prev_parts:
-                (sig_fps, sig_failure) = verify_detached_signature(piece.string, prev.payload_bytes, gpgme_ctx)
+                (sig_fps, sigkey_missing) = verify_detached_signature(piece.string, prev.payload_bytes, gpgme_ctx)
+
+                piece.gpg_data.sigkey_missing = sigkey_missing
 
                 if sig_fps != []:
-                    piece.gpg_data = GPGData()
                     piece.gpg_data.sigs = sig_fps
-                    piece.gpg_data.sig_failure = sig_failure
                     piece.gpg_data.plainobj = prev
                     break
 
@@ -706,7 +708,6 @@ def prepare_for_reply_message (piece, replyinfo_obj):
         piece: a PayloadPiece object.
         replyinfo_obj: object which gets updated with decryption status, etc.
 
-
     Returns:
         Nothing
 
@@ -714,15 +715,15 @@ def prepare_for_reply_message (piece, replyinfo_obj):
         the piece.payload_piece value should be TxtType.message.
 
     Post:
-        replyinfo_obj gets updated with decryption status, signing status and a
-        potential signing key.
+        replyinfo_obj gets updated with decryption status, signing status, a
+        potential signing key, and posession status of the public key for the
+        signature.
     """
 
-    if piece.gpg_data == None:
-        replyinfo_obj.failed_decrypt = True
+    if piece.gpg_data == None or piece.gpg_data.plainobj == None:
         return
 
-    replyinfo_obj.success_decrypt = True
+    replyinfo_obj.decrypt_success = True
 
     # we already have a key (and a message)
     if replyinfo_obj.target_key != None:
@@ -732,9 +733,10 @@ def prepare_for_reply_message (piece, replyinfo_obj):
         replyinfo_obj.target_key = piece.gpg_data.sigs[0]
         replyinfo_obj.sig_success = True
         get_signed_part = False
+
     else:
-        if piece.gpg_data.sig_failure == True:
-            replyinfo_obj.sig_failure = True
+        if piece.gpg_data.sigkey_missing == True:
+            replyinfo_obj.sigkey_missing = True
 
         # only include a signed message in the reply.
         get_signed_part = True
@@ -762,9 +764,9 @@ def prepare_for_reply_pubkey (piece, replyinfo_obj):
     """
 
     if piece.gpg_data == None or piece.gpg_data.keys == []:
-        replyinfo_obj.no_public_key = True
+        pass
     else:
-        replyinfo_obj.public_key_received = True
+        replyinfo_obj.pubkey_success = True
 
         # prefer public key as a fallback for the encrypted reply
         replyinfo_obj.fallback_target_key = piece.gpg_data.keys[0]
@@ -788,12 +790,12 @@ def prepare_for_reply_sig (piece, replyinfo_obj):
     """
 
     if piece.gpg_data == None or piece.gpg_data.sigs == []:
-        replyinfo_obj.sig_failure = True
+
+        if piece.gpg_data.sigkey_missing == True:
+            replyinfo_obj.sigkey_missing = True
+
     else:
         replyinfo_obj.sig_success = True
-
-        if piece.gpg_data.sig_failure == True:
-            replyinfo_obj.sig_failure = True
 
         if replyinfo_obj.fallback_target_key == None:
             replyinfo_obj.fallback_target_key = piece.gpg_data.sigs[0]
@@ -842,7 +844,8 @@ def flatten_decrypted_payloads (eddymsg_obj, replyinfo_obj, get_signed_part):
         if (get_signed_part):
             if ((piece.piece_type == TxtType.detachedsig) \
                     or (piece.piece_type == TxtType.signature)) \
-                    and (piece.gpg_data != None):
+                    and (piece.gpg_data != None) \
+                    and (piece.gpg_data.plainobj != None):
                         flatten_decrypted_payloads(piece.gpg_data.plainobj, replyinfo_obj, False)
                         replyinfo_obj.target_key = piece.gpg_data.sigs[0]
                         break
@@ -882,12 +885,11 @@ def get_key_from_fp (replyinfo_obj, gpgme_ctx):
             try:
                 encrypt_to_key = gpgme_ctx.get_key(key)
                 replyinfo_obj.encrypt_to_key = encrypt_to_key
+                replyinfo_obj.have_reply_key = True
                 return
 
             except gpgme.GpgmeError:
                 pass
-
-    replyinfo_obj.no_public_key = True
 
 
 def write_reply (replyinfo_obj):
@@ -910,38 +912,38 @@ def write_reply (replyinfo_obj):
 
     reply_plain = ""
 
-    if replyinfo_obj.success_decrypt == True:
+    if replyinfo_obj.decrypt_success == True:
         reply_plain += replyinfo_obj.replies['success_decrypt']
+        reply_plain += "\n\n"
 
-        if (replyinfo_obj.sig_success == True) and (replyinfo_obj.encrypt_to_key != None):
+        if (replyinfo_obj.sig_success == True) and (replyinfo_obj.have_reply_key == True):
             quoted_text = email_quote_text(replyinfo_obj.msg_to_quote)
             reply_plain += quoted_text
-
-    elif replyinfo_obj.failed_decrypt == True:
-        reply_plain += replyinfo_obj.replies['failed_decrypt']
-
-
-    if replyinfo_obj.sig_success == True:
-        reply_plain += "\n\n"
-        reply_plain += replyinfo_obj.replies['sig_success']
+            reply_plain += "\n\n"
 
     else:
+        reply_plain += replyinfo_obj.replies['failed_decrypt']
         reply_plain += "\n\n"
+
+    if replyinfo_obj.sig_success == True:
+        reply_plain += replyinfo_obj.replies['sig_success']
+        reply_plain += "\n\n"
+
+    else:
         reply_plain += replyinfo_obj.replies['sig_failure']
-
-
-    if replyinfo_obj.no_public_key == True:
         reply_plain += "\n\n"
-        reply_plain += replyinfo_obj.replies['no_public_key']
 
-    elif replyinfo_obj.public_key_received == True:
-        reply_plain += "\n\n"
+    if (replyinfo_obj.pubkey_success == True):
         reply_plain += replyinfo_obj.replies['public_key_received']
+        reply_plain += "\n\n"
+
+    elif (replyinfo_obj.sigkey_missing == True):
+        reply_plain += replyinfo_obj.replies['no_public_key']
+        reply_plain += "\n\n"
 
 
-    reply_plain += "\n\n"
     reply_plain += replyinfo_obj.replies['signature']
-    reply_plain += "\n"
+    reply_plain += "\n\n"
 
     return reply_plain
 
@@ -995,9 +997,9 @@ def verify_sig_message (msg_block, gpgme_ctx):
     Returns:
         A tuple containing the plaintext of the signed part, the list of
         fingerprints of keys signing the data, and a boolean marking whether
-        there were any invalid signatures. If verification failed, perhaps
-        because the message was also encrypted, then empty results are
-        returned.
+        edward is missing all public keys for validating any of the signatures.
+        If verification failed, perhaps because the message was also encrypted,
+        then empty results are returned.
     """
 
     block_b = io.BytesIO(msg_block.encode('ascii'))
@@ -1006,19 +1008,22 @@ def verify_sig_message (msg_block, gpgme_ctx):
     try:
         sigs = gpgme_ctx.verify(block_b, None, plain_b)
     except gpgme.GpgmeError:
-        return ("",[],True)
+        return ("",[],False)
 
     plaintext = plain_b.getvalue().decode('utf-8')
 
-    sig_failure = False
+    sigkey_missing = False
     fingerprints = []
     for sig in sigs:
         if (sig.summary == 0) or (sig.summary & gpgme.SIGSUM_VALID != 0) or (sig.summary & gpgme.SIGSUM_GREEN != 0):
             fingerprints += [sig.fpr]
+            sigkey_missing = False
+            break
         else:
-            sig_failure = True
+            if (sig.summary & gpgme.SIGSUM_KEY_MISSING != 0):
+                sigkey_missing = True
 
-    return (plaintext, fingerprints, sig_failure)
+    return (plaintext, fingerprints, sigkey_missing)
 
 
 def verify_detached_signature (detached_sig, plaintext_bytes, gpgme_ctx):
@@ -1033,9 +1038,9 @@ def verify_detached_signature (detached_sig, plaintext_bytes, gpgme_ctx):
 
     Returns:
         A tuple containging a list of signing fingerprints if the signature
-        verification was sucessful, and a boolean noting whether there were any
-        failed signature validations. Otherwise, a tuple containing an empty
-        list and True are returned.
+        verification was sucessful, and a boolean marking whether edward is
+        missing all public keys for validating any of the signatures.
+        Otherwise, a tuple containing an empty list and True are returned.
     """
 
     detached_sig_fp = io.BytesIO(detached_sig.encode('ascii'))
@@ -1044,17 +1049,20 @@ def verify_detached_signature (detached_sig, plaintext_bytes, gpgme_ctx):
     try:
         result = gpgme_ctx.verify(detached_sig_fp, plaintext_fp, None)
     except gpgme.GpgmeError:
-        return ([],True)
+        return ([],False)
 
-    sig_failure = False
+    sigkey_missing = False
     sig_fingerprints = []
     for res_ in result:
         if (res_.summary == 0) or (res_.summary & gpgme.SIGSUM_VALID != 0) or (res_.summary & gpgme.SIGSUM_GREEN != 0):
             sig_fingerprints += [res_.fpr]
+            sigkey_missing = False
+            break
         else:
-            sig_failure = True
+            if (res_.summary & gpgme.SIGSUM_KEY_MISSING != 0):
+                sigkey_missing = True
 
-    return (sig_fingerprints, sig_failure)
+    return (sig_fingerprints, sigkey_missing)
 
 
 def decrypt_block (msg_block, gpgme_ctx):
@@ -1069,7 +1077,8 @@ def decrypt_block (msg_block, gpgme_ctx):
     Returns:
         A tuple containing plaintext, signatures (if the decryption and
         signature verification were successful, respectively), and a boolean
-        noting whether there were signatures that could not be validated.
+        marking whether edward is missing all public keys for validating any of
+        the signatures.
     """
 
     block_b = io.BytesIO(msg_block.encode('ascii'))
@@ -1078,19 +1087,22 @@ def decrypt_block (msg_block, gpgme_ctx):
     try:
         sigs = gpgme_ctx.decrypt_verify(block_b, plain_b)
     except gpgme.GpgmeError:
-        return ("",[],True)
+        return ("",[],False)
 
     plaintext = plain_b.getvalue().decode('utf-8')
 
-    sig_failure = False
+    sigkey_missing = False
     fingerprints = []
     for sig in sigs:
         if (sig.summary == 0) or (sig.summary & gpgme.SIGSUM_VALID != 0) or (sig.summary & gpgme.SIGSUM_GREEN != 0):
             fingerprints += [sig.fpr]
+            sigkey_missing = False
+            break
         else:
-            sig_failure = True
+            if (sig.summary & gpgme.SIGSUM_KEY_MISSING != 0):
+                sigkey_missing = True
 
-    return (plaintext, fingerprints, sig_failure)
+    return (plaintext, fingerprints, sigkey_missing)
 
 
 def email_to_from_subject (email_text):

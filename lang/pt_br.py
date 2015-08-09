@@ -21,7 +21,7 @@
 *********************************************************************"""
 
 replies = {
-    'success_decrypt' : "Olá, sou Edward, o amigo robô de GnuPG. Recebi e decifrei sua mensagem. Aqui vai uma cópia da sua mensagem:\n\n",
+    'success_decrypt' : "Olá, sou Edward, o amigo robô de GnuPG. Recebi e decifrei sua mensagem. Aqui vai uma cópia da sua mensagem:",
     'public_key_received' : 'Recebi sua chave pública. Muito agradecido.',
     'failed_decrypt' : "Perdão, não consegui decifrar sua mensagem. Você tem certeza que a cifrou usando minha chave pública?",
     'no_public_key' : "Perdão, não consegui encontrar sua chave pública. Você se lembrou de anexá-la?",

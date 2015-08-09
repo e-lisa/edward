@@ -21,7 +21,7 @@
 *********************************************************************"""
 
 replies = {
-    'success_decrypt' : "\n\n",
+    'success_decrypt' : "",
     'public_key_received' : '',
     'failed_decrypt' : "",
     'no_public_key' : "",

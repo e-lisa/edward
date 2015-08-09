@@ -21,7 +21,7 @@
 *********************************************************************"""
 
 replies = {
-    'success_decrypt' : "Bună ziua, eu sunt Edward, robotul GnuPG cel prietenos. Am primit mesajul dumneavoastră și l-am decriptat. Iată o copie a mesajului dumneavoastră:\n\n",
+    'success_decrypt' : "Bună ziua, eu sunt Edward, robotul GnuPG cel prietenos. Am primit mesajul dumneavoastră și l-am decriptat. Iată o copie a mesajului dumneavoastră:",
     'public_key_received' : 'Am primit cheia dumneavoastră publică. Mulțumesc.',
     'failed_decrypt' : "Îmi pare rău, dar nu am putut decripta mesajul dumneavoastră. Sunteți sigur(ă) că l-ați criptat cu cheia mea publică?",
     'no_public_key' : "Îmi pare rău, dar nu am putut găsi cheia dumneavoastră publică. V-ați amintit să o atașați?",
