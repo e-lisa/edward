@@ -913,31 +913,38 @@ def write_reply (replyinfo_obj):
     reply_plain = ""
 
     if replyinfo_obj.decrypt_success == True:
+        debug('decrypt success')
         reply_plain += replyinfo_obj.replies['success_decrypt']
         reply_plain += "\n\n"
 
         if (replyinfo_obj.sig_success == True) and (replyinfo_obj.have_reply_key == True):
+            debug('message quoted')
             quoted_text = email_quote_text(replyinfo_obj.msg_to_quote)
             reply_plain += quoted_text
             reply_plain += "\n\n"
 
     else:
+        debug('decrypt failure')
         reply_plain += replyinfo_obj.replies['failed_decrypt']
         reply_plain += "\n\n"
 
     if replyinfo_obj.sig_success == True:
+        debug('signature success')
         reply_plain += replyinfo_obj.replies['sig_success']
         reply_plain += "\n\n"
 
     else:
+        debug('signature failure')
         reply_plain += replyinfo_obj.replies['sig_failure']
         reply_plain += "\n\n"
 
     if (replyinfo_obj.pubkey_success == True):
+        debug('public key received')
         reply_plain += replyinfo_obj.replies['public_key_received']
         reply_plain += "\n\n"
 
     elif (replyinfo_obj.sigkey_missing == True):
+        debug('no public key')
         reply_plain += replyinfo_obj.replies['no_public_key']
         reply_plain += "\n\n"
 
