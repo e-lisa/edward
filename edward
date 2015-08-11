@@ -429,19 +429,22 @@ def get_subpart_data (part):
         a single-part EddyMsg() object
     """
 
-    charset                 = part.get_content_charset()
-    mime_decoded_bytes      = part.get_payload(decode=True)
-
     obj = EddyMsg()
-    obj.payload_bytes       = part.as_bytes()
 
-    obj.filename            = part.get_filename()
-    obj.content_type        = part.get_content_type()
-    obj.description_list    = part['content-description']
+    mime_decoded_bytes      = part.get_payload(decode=True)
+    charset                 = part.get_content_charset()
 
     # your guess is as good as a-myy-ee-ine...
     if charset == None:
         charset = 'utf-8'
+
+    payload_string          = part.as_string()
+    if payload_string != None:
+        obj.payload_bytes   = payload_string.encode(charset)
+
+    obj.filename            = part.get_filename()
+    obj.content_type        = part.get_content_type()
+    obj.description_list    = part['content-description']
 
     if mime_decoded_bytes != None:
         try:
