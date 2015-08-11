@@ -192,6 +192,8 @@ class ReplyInfo (object):
     'sig_success' is set to True if edward could to some extent verify the
     signature of a signed part of the message to edward.
 
+    'sig_failure' is set to True if edward could not verify a siganture.
+
     'pubkey_success' is set to True if edward successfully imported a public
     key.
 
@@ -213,6 +215,7 @@ class ReplyInfo (object):
     sig_success             = False
     pubkey_success          = False
 
+    sig_failure             = False
     sigkey_missing          = False
     have_reply_key          = False
 
@@ -793,6 +796,7 @@ def prepare_for_reply_sig (piece, replyinfo_obj):
     """
 
     if piece.gpg_data == None or piece.gpg_data.sigs == []:
+        replyinfo_obj.sig_failure = True
 
         if piece.gpg_data.sigkey_missing == True:
             replyinfo_obj.sigkey_missing = True
@@ -936,7 +940,7 @@ def write_reply (replyinfo_obj):
         reply_plain += replyinfo_obj.replies['sig_success']
         reply_plain += "\n\n"
 
-    else:
+    elif replyinfo_obj.sig_failure == True:
         debug('signature failure')
         reply_plain += replyinfo_obj.replies['sig_failure']
         reply_plain += "\n\n"
