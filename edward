@@ -215,6 +215,7 @@ class ReplyInfo (object):
     sig_success             = False
     pubkey_success          = False
 
+    decrypt_failure         = False
     sig_failure             = False
     sigkey_missing          = False
     have_reply_key          = False
@@ -727,6 +728,7 @@ def prepare_for_reply_message (piece, replyinfo_obj):
     """
 
     if piece.gpg_data == None or piece.gpg_data.plainobj == None:
+        replyinfo_obj.decrypt_failure = True
         return
 
     replyinfo_obj.decrypt_success = True
@@ -937,7 +939,7 @@ def write_reply (replyinfo_obj):
 
         reply_plain += "\n\n"
 
-    else:
+    elif replyinfo_obj.decrypt_failure == True:
         debug('decrypt failure')
         reply_plain += replyinfo_obj.replies['failed_decrypt']
         reply_plain += "\n\n"
@@ -960,6 +962,12 @@ def write_reply (replyinfo_obj):
     elif (replyinfo_obj.sigkey_missing == True):
         debug('no public key')
         reply_plain += replyinfo_obj.replies['no_public_key']
+        reply_plain += "\n\n"
+
+
+    if (reply_plain == ""):
+        debug('plaintext message')
+        reply_plain += replyinfo_obj.replies['failed_decrypt']
         reply_plain += "\n\n"
 
 
