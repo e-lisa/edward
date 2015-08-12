@@ -218,6 +218,7 @@ class ReplyInfo (object):
     decrypt_failure         = False
     sig_failure             = False
     sigkey_missing          = False
+
     have_reply_key          = False
 
 
@@ -925,6 +926,7 @@ def write_reply (replyinfo_obj):
         reply_plain += replyinfo_obj.replies['greeting']
         reply_plain += "\n\n"
 
+
     if replyinfo_obj.decrypt_success == True:
         debug('decrypt success')
         reply_plain += replyinfo_obj.replies['success_decrypt']
@@ -944,6 +946,7 @@ def write_reply (replyinfo_obj):
         reply_plain += replyinfo_obj.replies['failed_decrypt']
         reply_plain += "\n\n"
 
+
     if replyinfo_obj.sig_success == True:
         debug('signature success')
         reply_plain += replyinfo_obj.replies['sig_success']
@@ -953,6 +956,7 @@ def write_reply (replyinfo_obj):
         debug('signature failure')
         reply_plain += replyinfo_obj.replies['sig_failure']
         reply_plain += "\n\n"
+
 
     if (replyinfo_obj.pubkey_success == True):
         debug('public key received')
