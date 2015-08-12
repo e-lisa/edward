@@ -254,10 +254,10 @@ def main ():
     gpgme_ctx = get_gpg_context(edward_config.gnupghome,
                               edward_config.sign_with_key)
 
-    email_text = sys.stdin.read()
-    email_struct = parse_pgp_mime(email_text, gpgme_ctx)
+    email_bytes = sys.stdin.buffer.read()
+    email_struct = parse_pgp_mime(email_bytes, gpgme_ctx)
 
-    email_to, email_from, email_subject = email_to_from_subject(email_text)
+    email_to, email_from, email_subject = email_to_from_subject(email_bytes)
     lang, reply_from = import_lang_pick_address(email_to, edward_config.hostname)
 
     replyinfo_obj = ReplyInfo()
@@ -312,7 +312,7 @@ def get_gpg_context (gnupghome, sign_with_key_fp):
     return gpgme_ctx
 
 
-def parse_pgp_mime (email_text, gpgme_ctx):
+def parse_pgp_mime (email_bytes, gpgme_ctx):
     """Parses the email for mime payloads and decrypts/verfies signatures.
 
     This function creates a representation of a mime or plaintext email with
@@ -321,7 +321,7 @@ def parse_pgp_mime (email_text, gpgme_ctx):
     does some very basic signature verification on those parts.
 
     Args:
-        email_text: an email message in string format
+        email_bytes: an email message in byte string format
         gpgme_ctx:  a gpgme context
 
     Returns:
@@ -332,7 +332,7 @@ def parse_pgp_mime (email_text, gpgme_ctx):
         imported payloads
     """
 
-    email_struct = email.parser.Parser().parsestr(email_text)
+    email_struct = email.parser.BytesParser().parsebytes(email_bytes)
 
     eddymsg_obj = parse_mime(email_struct)
     split_payloads(eddymsg_obj)
@@ -592,27 +592,27 @@ def gpg_on_payloads (eddymsg_obj, gpgme_ctx, prev_parts=[]):
         elif piece.piece_type == TxtType.message:
             piece.gpg_data = GPGData()
 
-            (plaintext, sigs, sigkey_missing) = decrypt_block(piece.string, gpgme_ctx)
+            (plaintext_b, sigs, sigkey_missing) = decrypt_block(piece.string, gpgme_ctx)
 
             piece.gpg_data.sigkey_missing = sigkey_missing
 
-            if plaintext:
+            if plaintext_b:
                 piece.gpg_data.decrypted = True
                 piece.gpg_data.sigs = sigs
                 # recurse!
-                piece.gpg_data.plainobj = parse_pgp_mime(plaintext, gpgme_ctx)
+                piece.gpg_data.plainobj = parse_pgp_mime(plaintext_b, gpgme_ctx)
                 continue
 
             # if not encrypted, check to see if this is an armored signature.
-            (plaintext, sigs,  sigkey_missing) = verify_sig_message(piece.string, gpgme_ctx)
+            (plaintext_b, sigs,  sigkey_missing) = verify_sig_message(piece.string, gpgme_ctx)
 
             piece.gpg_data.sigkey_missing = sigkey_missing
 
-            if plaintext:
+            if plaintext_b:
                 piece.piece_type = TxtType.signature
                 piece.gpg_data.sigs = sigs
                 # recurse!
-                piece.gpg_data.plainobj = parse_pgp_mime(plaintext, gpgme_ctx)
+                piece.gpg_data.plainobj = parse_pgp_mime(plaintext_b, gpgme_ctx)
 
         elif piece.piece_type == TxtType.pubkey:
             key_fps = add_gpg_key(piece.string, gpgme_ctx)
@@ -1009,7 +1009,7 @@ def verify_sig_message (msg_block, gpgme_ctx):
         gpgme_ctx: the gpgme context
 
     Returns:
-        A tuple containing the plaintext of the signed part, the list of
+        A tuple containing the plaintext bytes of the signed part, the list of
         fingerprints of keys signing the data, and a boolean marking whether
         edward is missing all public keys for validating any of the signatures.
         If verification failed, perhaps because the message was also encrypted,
@@ -1024,7 +1024,7 @@ def verify_sig_message (msg_block, gpgme_ctx):
     except gpgme.GpgmeError:
         return ("",[],False)
 
-    plaintext = plain_b.getvalue().decode('utf-8')
+    plaintext_b = plain_b.getvalue()
 
     sigkey_missing = False
     fingerprints = []
@@ -1037,7 +1037,7 @@ def verify_sig_message (msg_block, gpgme_ctx):
             if (sig.summary & gpgme.SIGSUM_KEY_MISSING != 0):
                 sigkey_missing = True
 
-    return (plaintext, fingerprints, sigkey_missing)
+    return (plaintext_b, fingerprints, sigkey_missing)
 
 
 def verify_detached_signature (detached_sig, plaintext_bytes, gpgme_ctx):
@@ -1089,7 +1089,7 @@ def decrypt_block (msg_block, gpgme_ctx):
         gpgme_ctx: the gpgme context
 
     Returns:
-        A tuple containing plaintext, signatures (if the decryption and
+        A tuple containing plaintext bytes, signatures (if the decryption and
         signature verification were successful, respectively), and a boolean
         marking whether edward is missing all public keys for validating any of
         the signatures.
@@ -1103,7 +1103,7 @@ def decrypt_block (msg_block, gpgme_ctx):
     except gpgme.GpgmeError:
         return ("",[],False)
 
-    plaintext = plain_b.getvalue().decode('utf-8')
+    plaintext_b = plain_b.getvalue()
 
     sigkey_missing = False
     fingerprints = []
@@ -1116,22 +1116,22 @@ def decrypt_block (msg_block, gpgme_ctx):
             if (sig.summary & gpgme.SIGSUM_KEY_MISSING != 0):
                 sigkey_missing = True
 
-    return (plaintext, fingerprints, sigkey_missing)
+    return (plaintext_b, fingerprints, sigkey_missing)
 
 
-def email_to_from_subject (email_text):
+def email_to_from_subject (email_bytes):
     """Returns the values of the email's To:, From: and Subject: fields
 
     Returns this information from an email.
 
     Args:
-        email_text: the string form of the email
+        email_bytes: the byte string form of the email
 
     Returns:
         the email To:, From:, and Subject: fields as strings
     """
 
-    email_struct = email.parser.Parser().parsestr(email_text)
+    email_struct = email.parser.BytesParser().parsebytes(email_bytes)
 
     email_to        = email_struct['To']
     email_from      = email_struct['From']
