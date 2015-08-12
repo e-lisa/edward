@@ -810,6 +810,10 @@ def prepare_for_reply_sig (piece, replyinfo_obj):
         if replyinfo_obj.fallback_target_key == None:
             replyinfo_obj.fallback_target_key = piece.gpg_data.sigs[0]
 
+    if (piece.piece_type == TxtType.signature):
+        # to catch public keys in signature blocks
+        prepare_for_reply(piece.gpg_data.plainobj, replyinfo_obj)
+
 
 def flatten_decrypted_payloads (eddymsg_obj, replyinfo_obj, get_signed_part):
     """For creating a string representation of a signed, encrypted part.
