@@ -21,13 +21,16 @@
 *********************************************************************"""
 
 replies = {
+    'greeting' : "",
     'success_decrypt' : "",
+    'quote_follows' : "",
     'public_key_received' : '',
     'failed_decrypt' : "",
     'no_public_key' : "",
     'sig_failure' : '',
     'sig_success' : '',
-    'signature' : ''
+    'signature' : '',
+    'space' : " "
 }
 
 

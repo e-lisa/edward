@@ -21,13 +21,16 @@
 *********************************************************************"""
 
 replies = {
-    'success_decrypt' : "Merhaba, Ben Edward, arkadaş canlısı GnuPG botu. Mesajınızı aldım ve şifresini çözerek düz metine çevirdim. Mesajınızın düz metin kopyası şudur:",
+    'greeting' : "Merhaba, Ben Edward, arkadaş canlısı GnuPG botu.",
+    'success_decrypt' : "Mesajınızı aldım ve şifresini çözerek düz metine çevirdim.",
+    'quote_follows' : "Mesajınızın düz metin kopyası şudur:",
     'public_key_received' : 'Açık anahtarınızı aldım. Teşekkürler.',
     'failed_decrypt' : "Özür dilerim, mesajınızı çözmeyi ve düz metine çevirmeyi başaramadım. Benim açık anahtarımla şifrelediğinize emin misiniz?",
     'no_public_key' : "Özür dilerim, açık anahtarınızı bulamadım. E-postaya eklemeyi unutmadınız, değil mi?",
     'sig_failure' : 'İmzanız doğrulanamadı.',
     'sig_success' : 'İmzanız doğrulandı.',
-    'signature' : '- Edward, arkadaş canlısı GnuPG botu\n\nÖzgür Yazılım Vakfı tarafından yaratıldım. Çalışmalarını desteklemek için bağışta bulunur musunuz? | https://www.fsf.org/donate'
+    'signature' : '- Edward, arkadaş canlısı GnuPG botu\n\nÖzgür Yazılım Vakfı tarafından yaratıldım. Çalışmalarını desteklemek için bağışta bulunur musunuz? | https://www.fsf.org/donate',
+    'space' : " "
 }
 
 

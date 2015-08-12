@@ -21,13 +21,16 @@
 *********************************************************************"""
 
 replies = {
-    'success_decrypt' : "Hallo, Ich bin Edward, der freundliche GnuPG Roboter. Ich deine E-Mail empfangen und entschlüsselt. Hier ist eine Kopie deiner Nachricht:",
+    'greeting' : "Hallo, Ich bin Edward, der freundliche GnuPG Roboter.",
+    'success_decrypt' : "Ich deine E-Mail empfangen und entschlüsselt.",
+    'quote_follows' : "Hier ist eine Kopie deiner Nachricht:",
     'public_key_received' : 'Ich habe deinen öffentlicher Schlüssel erhalten. Danke.',
     'failed_decrypt' : "Tut mir leid, ich konnte deine Nachricht nicht entschlüsseln. Bist du dir sicher, dass du sie mit meinem öffentlichen Schlüssel verschlüsselt hast?",
     'no_public_key' : "Tut mir leid, Ich konnte deinen öffentlicher Schlüssel nicht finden. Hast du daran gedacht ihn an die E-Mail anzuhängen?",
     'sig_failure' : 'Deine Signatur konnte nicht verifiziert werden.',
     'sig_success' : 'Deine Signatur wurde erfolgreich verifiziert.',
-    'signature' : '- Edward, der freundliche GnuPG Roboter\nnDie Free Software Foundation hat mich erstellt. Kannst du etwas spenden, um ihre Arbeit zu unterstützung? | https://www.fsf.org/donate'
+    'signature' : '- Edward, der freundliche GnuPG Roboter\nnDie Free Software Foundation hat mich erstellt. Kannst du etwas spenden, um ihre Arbeit zu unterstützung? | https://www.fsf.org/donate',
+    'space' : " "
 }
 
 

@@ -21,13 +21,16 @@
 *********************************************************************"""
 
 replies = {
-    'success_decrypt' : "Olá, sou Edward, o amigo robô de GnuPG. Recebi e decifrei sua mensagem. Aqui vai uma cópia da sua mensagem:",
+    'greeting' : "Olá, sou Edward, o amigo robô de GnuPG.",
+    'success_decrypt' : "Recebi e decifrei sua mensagem.",
+    'quote_follows' : "Aqui vai uma cópia da sua mensagem:",
     'public_key_received' : 'Recebi sua chave pública. Muito agradecido.',
     'failed_decrypt' : "Perdão, não consegui decifrar sua mensagem. Você tem certeza que a cifrou usando minha chave pública?",
     'no_public_key' : "Perdão, não consegui encontrar sua chave pública. Você se lembrou de anexá-la?",
     'sig_failure' : 'Sua assinatura não pôde ser verificada.',
     'sig_success' : 'Sua assinatura foi verificada.',
-    'signature' : '- Edward, o amigo robô de GnuPG\n\nA Free Software Foundation me criou. Você pode fazer uma doação para apoiar o trabalho dela? | https://www.fsf.org/donate'
+    'signature' : '- Edward, o amigo robô de GnuPG\n\nA Free Software Foundation me criou. Você pode fazer uma doação para apoiar o trabalho dela? | https://www.fsf.org/donate',
+    'space' : " "
 }
 
 

@@ -919,16 +919,23 @@ def write_reply (replyinfo_obj):
 
     reply_plain = ""
 
+    if (replyinfo_obj.pubkey_success == True):
+        reply_plain += replyinfo_obj.replies['greeting']
+        reply_plain += "\n\n"
+
     if replyinfo_obj.decrypt_success == True:
         debug('decrypt success')
         reply_plain += replyinfo_obj.replies['success_decrypt']
-        reply_plain += "\n\n"
 
         if (replyinfo_obj.sig_success == True) and (replyinfo_obj.have_reply_key == True):
             debug('message quoted')
+            reply_plain += replyinfo_obj.replies['space']
+            reply_plain += replyinfo_obj.replies['quote_follows']
+            reply_plain += "\n\n"
             quoted_text = email_quote_text(replyinfo_obj.msg_to_quote)
             reply_plain += quoted_text
-            reply_plain += "\n\n"
+
+        reply_plain += "\n\n"
 
     else:
         debug('decrypt failure')
