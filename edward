@@ -1295,10 +1295,10 @@ def generate_encrypted_mime (plaintext, email_to, email_subject, encrypt_to_key,
         A string version of the mime message, possibly encrypted and signed.
     """
 
-    if (encrypt_to_key != None):
+    plaintext_mime = MIMEText(plaintext)
+    plaintext_mime.set_charset('utf-8')
 
-        plaintext_mime = MIMEText(plaintext)
-        plaintext_mime.set_charset('utf-8')
+    if (encrypt_to_key != None):
 
         encrypted_text = encrypt_sign_message(plaintext_mime.as_string(),
                                               encrypt_to_key,
@@ -1323,8 +1323,7 @@ def generate_encrypted_mime (plaintext, email_to, email_subject, encrypt_to_key,
         message_mime['Content-Disposition'] = 'inline'
 
     else:
-        message_mime = MIMEText(plaintext)
-        message_mime.set_charset('utf-8')
+        message_mime = plaintext_mime
 
     message_mime['To'] = email_to
     message_mime['Subject'] = email_subject
