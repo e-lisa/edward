@@ -26,7 +26,7 @@
 
 Code sourced from these projects:
 
-  * http://agpl.fsf.org/emailselfdefense.fsf.org/edward/CURRENT/edward.tar.gz
+  * http://agpl.fsf.org/emailselfdefense.fsf.org/edward/PREVIOUS-20150530/edward.tgz
   * https://git-tails.immerda.ch/whisperback/tree/whisperBack/encryption.py?h=feature/python3
   * http://www.physics.drexel.edu/~wking/code/python/send_pgp_mime
 """
