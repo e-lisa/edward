@@ -928,7 +928,7 @@ def get_key_from_fp (replyinfo_obj, gpgme_ctx):
             except gpgme.GpgmeError:
                 continue
 
-            if encrypt_to_key.can_encrypt == True and encrypt_to_key.revoked == False:
+            if is_key_usable(encrypt_to_key):
                 replyinfo_obj.encrypt_to_key = encrypt_to_key
                 replyinfo_obj.have_reply_key = True
                 replyinfo_obj.key_can_encrypt = True
@@ -1059,7 +1059,7 @@ def add_gpg_key (key_block, gpgme_ctx):
         except:
             pass
 
-        if key_obj.can_encrypt == True and key_obj.revoked == False:
+        if is_key_usable(key_obj):
             key_fingerprints += [fingerprint]
             key_cannot_encrypt = False
 
@@ -1202,7 +1202,7 @@ def get_signature_fp (sigs, gpgme_ctx):
                     sigkey_missing = True
                     continue
 
-            if key_obj.can_encrypt == True and key_obj.revoked == False:
+            if is_key_usable(key_obj):
                 fingerprints += [sig.fpr]
                 key_cannot_encrypt = False
                 sigkey_missing = False
@@ -1215,6 +1215,24 @@ def get_signature_fp (sigs, gpgme_ctx):
                 sigkey_missing = True
 
     return (fingerprints, sigkey_missing, key_cannot_encrypt)
+
+
+def is_key_usable (key_obj):
+    """Returns boolean representing key usability regarding encryption
+
+    Tests various feature of key and returns usability
+
+    Args:
+        key_obj: a gpgme key object
+
+    Returns:
+        A boolean representing key usability
+    """
+    if key_obj.can_encrypt and not key_obj.invalid and not key_obj.expired \
+            and not key_obj.revoked and not key_obj.disabled:
+        return True
+    else:
+        return False
 
 
 def email_to_from_subject (email_bytes):
