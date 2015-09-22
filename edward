@@ -150,8 +150,7 @@ class GPGData (object):
     verify the signature on a block of text.
 
     'key_cannot_encrypt' is set to True if pubkeys or sigs' keys in the payload
-    piece are not capable of encryption. This could happen if a key is revoked
-    or expired, for instance.
+    piece are not capable of encryption, are revoked or expired, for instance.
 
     'keys' is a list of fingerprints of keys obtained in public key blocks.
     """
@@ -929,7 +928,7 @@ def get_key_from_fp (replyinfo_obj, gpgme_ctx):
             except gpgme.GpgmeError:
                 continue
 
-            if encrypt_to_key.can_encrypt == True:
+            if encrypt_to_key.can_encrypt == True and encrypt_to_key.revoked == False:
                 replyinfo_obj.encrypt_to_key = encrypt_to_key
                 replyinfo_obj.have_reply_key = True
                 replyinfo_obj.key_can_encrypt = True
@@ -1060,7 +1059,7 @@ def add_gpg_key (key_block, gpgme_ctx):
         except:
             pass
 
-        if key_obj.can_encrypt == True:
+        if key_obj.can_encrypt == True and key_obj.revoked == False:
             key_fingerprints += [fingerprint]
             key_cannot_encrypt = False
 
@@ -1203,7 +1202,7 @@ def get_signature_fp (sigs, gpgme_ctx):
                     sigkey_missing = True
                     continue
 
-            if key_obj.can_encrypt == True:
+            if key_obj.can_encrypt == True and key_obj.revoked == False:
                 fingerprints += [sig.fpr]
                 key_cannot_encrypt = False
                 sigkey_missing = False
