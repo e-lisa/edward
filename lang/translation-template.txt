@@ -1,0 +1,57 @@
+License: (Do not translate)
+
+#*************************************************************************
+# Edward is free software: you can redistribute it and/or modify         *
+# it under the terms of the GNU Affero Public License as published by    *
+# the Free Software Foundation, either version 3 of the License, or      *
+# (at your option) any later version.                                    *
+#                                                                        *
+# "run-tests" is distributed in the hope that it will be useful,         *
+# but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+# GNU Affero Public License for more details.                            *
+#                                                                        *
+# You should have received a copy of the GNU Affero Public License       *
+# along with Edward.  If not, see <http://www.gnu.org/licenses/>.        *
+#                                                                        *
+# Copyright (C) 2015 Andrew Engelbrecht                     (AGPLv3+)    *
+# Copyright (C) 2014 Josh Drake                             (AGPLv3+)    *
+# Copyright (C) 2014 Lisa Marie Maginnis                    (AGPLv3+)    *
+#*************************************************************************
+
+Please translate:
+
+### 1 | Greeting NOTE: The Greeting is sent out with all emails.
+Subject: I received your public key
+Body: Hello, I am Edward, the friendly GnuPG bot.
+
+### 2 | Success Decrypt
+Subject: I decrypted your message
+Body: I received your message and decrypted it.
+
+### 3 | Quote Follows NOTE: This is sent out if Decryption and Sig verification were successful.
+Here's a copy of your message: 
+
+### 4 | Pubkey Received
+I received your public key. Thanks.
+
+### 5 | Failed Decrypt
+I'm sorry, I was not able to decrypt your message. Are you sure you encrypted it with my public key?
+
+### 6 | No Pubkey
+I'm sorry, I was not able to find your public key. Did you remember to attach it?
+
+### 7 | Sig Failure: NOTE: Sig Sucess and Sig Failure are sent out in addition to success/failure of decryption.
+I wasn't able to verify your cryptographic signature.
+
+### 8 | Sig Success:
+I succesfully verified your cryptographic signature.
+
+### 9 | Signature:
+- Edward, the friendly GnuPG bot
+
+The Free Software Foundation created me. Can you donate to support their work? | https://www.fsf.org/donate
+
+### 10 | Space: NOTE: This marks whether spaces are put between symbols and periods, etc. Please use quotes. Thanks!
+" "
+
