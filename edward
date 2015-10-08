@@ -431,16 +431,16 @@ def scan_and_split (payload_piece, match_name, pattern):
 
 
 def get_subpart_data (part):
-    """This function grabs information from a single part mime object.
+    """This function grabs information from a mime part.
 
-    It copies needed data from a single part email.parser.Parser() object over
-    to an EddyMsg object.
+    It copies needed data from a email.parser.Parser() object over to an
+    EddyMsg object.
 
     Args:
-        part: a non-multi-part mime.parser.Parser() object
+        part: a mime.parser.Parser() object
 
     Returns:
-        a single-part EddyMsg() object
+        an EddyMsg() object
     """
 
     obj = EddyMsg()
