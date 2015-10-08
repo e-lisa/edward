@@ -369,16 +369,13 @@ def parse_mime(msg_struct):
         an instance of EddyMsg, potentially a recursive one.
     """
 
-    eddymsg_obj = EddyMsg()
+    eddymsg_obj = get_subpart_data(msg_struct)
 
     if msg_struct.is_multipart() == True:
         payloads = msg_struct.get_payload()
 
         eddymsg_obj.multipart = True
         eddymsg_obj.subparts = list(map(parse_mime, payloads))
-
-    else:
-        eddymsg_obj = get_subpart_data(msg_struct)
 
     return eddymsg_obj
 
