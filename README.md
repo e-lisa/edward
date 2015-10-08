@@ -45,6 +45,9 @@ No news (aside from execution duration) is good news.
 To automatically pipe incoming messages to edward and send its replies: (Notice
 the added dot.)
 
+    $ cp edward_config.py.example edward_config.py
+    $ nano edward_config.py
+
     $ cd ~ ; mv edward edward-src
     $ cp edward-src/procmailrc.example ~/.procmailrc
     $ nano .procmailrc
