@@ -454,7 +454,9 @@ def get_subpart_data (part):
 
     payload_string          = part.as_string()
     if payload_string != None:
-        obj.payload_bytes   = payload_string.encode(charset)
+        # convert each isolated carriage return or line feed to carriage return + line feed
+        payload_string_crlf = re.sub(r'\n', '\r\n', re.sub(r'\r', '\n', re.sub(r'\r\n', '\n', payload_string)))
+        obj.payload_bytes   = payload_string_crlf.encode(charset)
 
     obj.filename            = part.get_filename()
     obj.content_type        = part.get_content_type()
