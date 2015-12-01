@@ -37,8 +37,8 @@ import os
 import sys
 import enum
 import gpgme
+import smtplib
 import importlib
-import subprocess
 
 import email.parser
 import email.message
@@ -1351,16 +1351,9 @@ def generate_encrypted_mime (plaintext, email_to, email_subject, encrypt_to_key,
 
 def send_reply(email_txt, subject, reply_to, reply_from):
 
-    email_bytes = email_txt.encode('ascii')
-
-    p = subprocess.Popen(["/usr/sbin/sendmail", "-f", reply_from, "-F", "Edward, GPG Bot", "-i", reply_to], stdin=subprocess.PIPE)
-
-    (stdout, stderr) = p.communicate(email_bytes)
-
-    if stdout != None:
-        debug("sendmail stdout: " + str(stdout))
-    if stderr != None:
-        error("sendmail stderr: " + str(stderr))
+    s = smtplib.SMTP('localhost')
+    s.sendmail(reply_from, reply_to, email_txt)
+    s.quit()
 
 
 def email_quote_text (text):
