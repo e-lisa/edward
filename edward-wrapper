@@ -20,5 +20,5 @@
 . ~/.bashrc
 export LC_ALL=en_US.UTF-8
 
-tee -a ~/incoming.log | /usr/bin/time -f "\nreal:   %E [h:]m:s" ~/edward-src/edward
+tee -a ~/incoming.log | /usr/bin/time -f "\nreal:   %E [h:]m:s\n" ~/edward-src/edward
 
