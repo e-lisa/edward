@@ -288,7 +288,7 @@ def main ():
     if print_reply_only == True:
         print(reply_mime)
     else:
-        send_reply(reply_mime, email_subject, email_from, reply_from)
+        send_reply(reply_mime, email_from, reply_from)
 
 
 def get_gpg_context (gnupghome, sign_with_key_fp):
@@ -1349,7 +1349,20 @@ def generate_encrypted_mime (plaintext, email_to, email_subject, encrypt_to_key,
     return reply
 
 
-def send_reply(email_txt, subject, reply_to, reply_from):
+def send_reply(email_txt, reply_to, reply_from):
+    """Sends reply email
+
+    Sent to original sender
+
+    Args:
+        email_txt: message as a string
+        reply_to: recipient of reply
+        reply_from: edward's specific email address
+
+    Post:
+        Email is sent
+    """
+
 
     s = smtplib.SMTP('localhost')
     s.sendmail(reply_from, reply_to, email_txt)
