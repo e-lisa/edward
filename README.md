@@ -22,6 +22,11 @@ The public and private GPG keys in tests/testgnupghome are licensed under CC0.
 
 ## Usage
 
+To run the test cases in the top level directory: (No emails are sent)
+
+    $ ln -s edward_config.py.example edward_config.py
+    $ ./run-tests
+
 Edward expects the TO address of incoming emails and the FROM address of
 outgoing emails to be "edward-en@domain" or "edward-es@domain", etc. For a list
 of supported languages, look at the beginning of the edward source file, or
@@ -35,10 +40,6 @@ To automatically send the the replay email using sendmail: (For this to work,
 you will need to properly setup your mail transfer agent (MTA).)
 
     $ ./edward < input-email.eml
-
-To run the test cases in the top level directory: (No emails are sent)
-
-    $ ./run-tests
 
 No news (aside from execution duration) is good news.
 
