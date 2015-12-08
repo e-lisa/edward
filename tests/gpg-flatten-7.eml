@@ -1,0 +1,76 @@
+Date: Sun, 09 Aug 2015 20:44:05 -0400
+From: No One <noone@localhost>
+To: noone@localhost
+Subject: testing mutt-like nested mime with signature
+MIME-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="eJnRUKwClWJh1Khz"
+Content-Disposition: inline
+
+
+--eJnRUKwClWJh1Khz
+Content-Type: multipart/mixed; boundary="opJtzjQTFsWo+cga"
+Content-Disposition: inline
+
+
+--opJtzjQTFsWo+cga
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+
+> =C3=9Cber Spa=C3=9F.
+>
+> qual =C3=A8 il suono di una mano sola?
+>
+> =E3=81=93=E3=82=93=E3=81=AB=E3=81=A1=E3=81=AF=E3=80=81=E3=81=8A=E5=85=83=
+=E6=B0=97=E3=81=A7=E3=81=99=E3=81=8B=EF=BC=9F
+>
+
+test.
+
+
+
+--opJtzjQTFsWo+cga
+Content-Type: application/pgp-keys
+Content-Description: PGP Key 0x6A4F6EE8
+Content-Disposition: attachment
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: GnuPG v1
+
+mI0EVa154AEEAKsP9IS3BkkbMv5qb4FGV0BQXg5xO+USOGAAeZYNYmYKRRsV9ANy
++AYKLHpEB+XIOIE8hZ6fy7HVQRhauhQHp5fRhhoNCSW6XpqJP0NqoFhnMRst+HKI
+APJPhrgBc6FqTvyrNPwvqM3lX4Zyp2r84nsJdaMteHRs6kzms8HCrYfnABEBAAG0
+LUluc2VjdXJlIFRlc3QgVXNlciBLZXkgKFNlY3JldCBLZXkgUHVibGlzaGVkKYi4
+BBMBAgAiBQJVrXngAhsDBgsJCAcDAgYVCAIJCgsEFgIDAQIeAQIXgAAKCRCxPm0v
+ak9u6EXuBACKpGwTOqgQSnzRV08VQANYmYLIqa3aFeZv7QvtY7b08d7sEo1LXR0G
+sCjhRljRfgxqC6M+YOZGI0gZAK35rQiOpI9CnT4XINOBssWHYRbwk8plnH3KBud8
+jC0rUCX+6pMvv82uOKpuPmwxL39T5TCg8xDvf0x5dBpA0BalvVVJY7iNBFWteeAB
+BADLm+SGFpVQsWkEDheexx3JBlkGyEjZ+YXl1TMdHVpv8pRbKXJ2ZcKezkc0iYE/
+kM0jTfLooWyoB0agBZWua6Z9aK972CLlGObPGlOtQqQZJ+LJVsWpiz76btqbSOie
+LU4TY1Vce/3V6i3iVBsLIgOaa3UjbuV2DgLzOXmScJQvqQARAQABiJ8EGAECAAkF
+AlWteeACGwwACgkQsT5tL2pPbuiSJQP/YAj8gkZ78gCr/BmkaHiahGRsoUD3fNtX
+X79DkUp9rAihPg0dB7AH4w3x+uYqBqo7V4xYTv7DtpXEJ0qITxwEhfrRGPCy77EE
+IFbtVS7P1VnnkOZn7B9GHW7TsjffbnFzLBaEwtdVeEgGBlujN8vtfRKwLEo1Lt2p
+Q3c9XQPAxeQ=
+=ZpO8
+-----END PGP PUBLIC KEY BLOCK-----
+
+--opJtzjQTFsWo+cga--
+
+--eJnRUKwClWJh1Khz
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iJwEAAECAAYFAlZnHqIACgkQsT5tL2pPbuiHgwP/Y1zXqpW5iFWv6/1D0FiU6n6O
+c8GtIHYwNdkfpA7V6A8/fi83NloQY3QRiHf5CtGiAHDug/qApdLL2Dg8ZPTs748C
+jjnAGwj1pjCO9Wrosy6vmDisVgyGHR0GLPbUSuCwGGUIEzBAv4Niwyumkljp83jI
+xkatoxkXuH62V7CE8O0=
+=MrrK
+-----END PGP SIGNATURE-----
+
+--eJnRUKwClWJh1Khz--
+
