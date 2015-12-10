@@ -92,8 +92,9 @@ class EddyMsg (object):
     'payload_pieces' is a list of objects containing strings that when strung
     together form the fully-decoded string representation of the mime part.
 
-    The 'filename', 'content_type' and 'description_list' come from the mime
-    part parameters.
+    The 'filename', 'content_type', 'content_disposition' and
+    'description_list' come from the mime part parameters.
+
     """
 
     multipart               = False
@@ -104,6 +105,7 @@ class EddyMsg (object):
 
     filename                = None
     content_type            = None
+    content_disposition     = None
     description_list        = None
 
 
@@ -460,6 +462,7 @@ def get_subpart_data (part):
 
     obj.filename            = part.get_filename()
     obj.content_type        = part.get_content_type()
+    obj.content_disposition = part['content-disposition']
     obj.description_list    = part['content-description']
 
     if mime_decoded_bytes != None:
@@ -889,7 +892,9 @@ def flatten_decrypted_payloads (eddymsg_obj, replyinfo_obj, get_signed_part):
                         replyinfo_obj.target_key = piece.gpg_data.sigs[0]
                         break
         else:
-            if piece.piece_type == TxtType.text:
+            if (eddymsg_obj.content_disposition == None \
+                    or not eddymsg_obj.content_disposition.startswith("attachment")) \
+                    and piece.piece_type == TxtType.text:
                 replyinfo_obj.msg_to_quote += piece.string
 
 
