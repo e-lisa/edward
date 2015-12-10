@@ -1368,6 +1368,9 @@ def send_reply(email_txt, reply_to, reply_from):
         Email is sent
     """
 
+    if reply_to == None:
+        error("*** ERROR: No one to send email to.")
+        exit(1)
 
     s = smtplib.SMTP('localhost')
     s.sendmail(reply_from, reply_to, email_txt)
