@@ -362,7 +362,7 @@ def parse_mime(msg_struct):
     each sub-part is also a EddyMsg instance.
 
     Args:
-        msg_struct: an email parsed with email.parser.Parser(), which can be
+        msg_struct: an email parsed with email.parser.BytesParser(), which can be
             multi-part
 
     Returns:
@@ -433,11 +433,11 @@ def scan_and_split (payload_piece, match_name, pattern):
 def get_subpart_data (part):
     """This function grabs information from a mime part.
 
-    It copies needed data from a email.parser.Parser() object over to an
+    It copies needed data from an email.parser.BytesParser() object over to an
     EddyMsg object.
 
     Args:
-        part: a mime.parser.Parser() object
+        part: an email.parser.BytesParser() object
 
     Returns:
         an EddyMsg() object
