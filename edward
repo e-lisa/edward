@@ -273,7 +273,7 @@ def main ():
     email_bytes = sys.stdin.buffer.read()
     email_struct = parse_pgp_mime(email_bytes, gpgme_ctx)
 
-    email_to, email_from, email_subject = email_to_from_subject(email_bytes)
+    email_to, email_reply_to, email_subject = email_to_reply_to_subject(email_bytes)
     lang, reply_from = import_lang_pick_address(email_to, edward_config.hostname)
 
     replyinfo_obj = ReplyInfo()
@@ -283,14 +283,14 @@ def main ():
     get_key_from_fp(replyinfo_obj, gpgme_ctx)
     reply_plaintext = write_reply(replyinfo_obj)
 
-    reply_mime = generate_encrypted_mime(reply_plaintext, email_from, \
+    reply_mime = generate_encrypted_mime(reply_plaintext, email_reply_to, \
                                          email_subject, replyinfo_obj.encrypt_to_key,
                                          gpgme_ctx)
 
     if print_reply_only == True:
         print(reply_mime)
     else:
-        send_reply(reply_mime, email_from, reply_from)
+        send_reply(reply_mime, email_reply_to, reply_from)
 
 
 def get_gpg_context (gnupghome, sign_with_key_fp):
@@ -1239,8 +1239,8 @@ def is_key_usable (key_obj):
         return False
 
 
-def email_to_from_subject (email_bytes):
-    """Returns the values of the email's To:, From: and Subject: fields
+def email_to_reply_to_subject (email_bytes):
+    """Returns the email's To:, Reply-To: (or From:), and Subject: fields
 
     Returns this information from an email.
 
@@ -1248,16 +1248,21 @@ def email_to_from_subject (email_bytes):
         email_bytes: the byte string form of the email
 
     Returns:
-        the email To:, From:, and Subject: fields as strings
+        the email To:, Reply-To: (or From:), and Subject: fields as strings
     """
 
     email_struct = email.parser.BytesHeaderParser().parsebytes(email_bytes)
 
     email_to        = email_struct['To']
     email_from      = email_struct['From']
+    email_reply_to  = email_struct['Reply-To']
+
     email_subject   = email_struct['Subject']
 
-    return email_to, email_from, email_subject
+    if email_reply_to == None:
+        email_reply_to = email_from
+
+    return email_to, email_reply_to, email_subject
 
 
 def import_lang_pick_address(email_to, hostname):
