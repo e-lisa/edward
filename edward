@@ -1251,7 +1251,7 @@ def email_to_from_subject (email_bytes):
         the email To:, From:, and Subject: fields as strings
     """
 
-    email_struct = email.parser.BytesParser().parsebytes(email_bytes)
+    email_struct = email.parser.BytesHeaderParser().parsebytes(email_bytes)
 
     email_to        = email_struct['To']
     email_from      = email_struct['From']
