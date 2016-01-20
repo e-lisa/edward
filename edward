@@ -1061,9 +1061,9 @@ def add_gpg_key (key_block, gpgme_ctx):
         try:
             key_obj = gpgme_ctx.get_key(fingerprint)
         except:
-            pass
+            key_obj = None
 
-        if is_key_usable(key_obj):
+        if key_obj != None and is_key_usable(key_obj):
             key_fingerprints += [fingerprint]
             key_cannot_encrypt = False
 
