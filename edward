@@ -271,6 +271,8 @@ def main ():
                               edward_config.sign_with_key)
 
     email_bytes = sys.stdin.buffer.read()
+
+    parse_pgp_mime(email_bytes, gpgme_ctx)
     email_struct = parse_pgp_mime(email_bytes, gpgme_ctx)
 
     email_to, email_reply_to, email_subject = email_to_reply_to_subject(email_bytes)
