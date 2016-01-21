@@ -1,6 +1,12 @@
 Hello, I am Edward, the friendly GnuPG bot.
 
-I received your message and decrypted it. Here's a copy of your message:
+I received your message and decrypted it.
+
+Your signature was verified.
+
+I received your public key. Thanks.
+
+Here's a copy of your message:
 
 > thanks for the message!
 > 
@@ -17,10 +23,6 @@ I received your message and decrypted it. Here's a copy of your message:
 > 
 > 
 > 
-
-Your signature was verified.
-
-I received your public key. Thanks.
 
 - Edward, the friendly GnuPG bot
 The Free Software Foundation created me.
