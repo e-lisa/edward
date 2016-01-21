@@ -28,7 +28,7 @@ replies = {
     'failed_decrypt' : "あなたからのメッセージを解読できなくて、すみません。そちらでは暗号化のとき、私の公開鍵を使ってくださったでしょうか？",
     'no_public_key' : "ごめんなさい、あなたの公開鍵が見つからないのです。公開鍵を添付したメールを前に送ってくださいましたか？",
     'sig_failure' : 'あなたの署名を認証できませんでした。',
-    'sig_success' : ' あなたの署名を確認できました。',
+    'sig_success' : 'あなたの署名を確認できました。',
     'signature' : '- GnuPGボットのEdward\n\nFree Software Foundationが私を制作しました。 Free Software Foundationに寄付しませんか。| https://www.fsf.org/donate',
     'space' : ""
 }
