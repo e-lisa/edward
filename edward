@@ -406,8 +406,7 @@ def scan_and_split (payload_piece, match_name, pattern):
         return [payload_piece]
 
     flags = re.DOTALL | re.MULTILINE
-    matches = re.search("(?P<beginning>.*?)(?P<match>" + pattern +
-                        ")(?P<rest>.*)", payload_piece.string, flags=flags)
+    matches = re.search(pattern, payload_piece.string, flags=flags)
 
     if matches == None:
         pieces = [payload_piece]
@@ -415,15 +414,15 @@ def scan_and_split (payload_piece, match_name, pattern):
     else:
 
         beginning               = PayloadPiece()
-        beginning.string        = matches.group('beginning')
+        beginning.string        = payload_piece.string[:matches.start()]
         beginning.piece_type    = payload_piece.piece_type
 
         match                   = PayloadPiece()
-        match.string            = matches.group('match')
+        match.string            = payload_piece.string[matches.start():matches.end()]
         match.piece_type        = match_name
 
         rest                    = PayloadPiece()
-        rest.string             = matches.group('rest')
+        rest.string             = payload_piece.string[matches.end():]
         rest.piece_type         = payload_piece.piece_type
 
         more_pieces = scan_and_split(rest, match_name, pattern)
