@@ -272,6 +272,7 @@ def main ():
 
     email_bytes = sys.stdin.buffer.read()
 
+    # do this twice so sigs can be verified with newly imported keys
     parse_pgp_mime(email_bytes, gpgme_ctx)
     email_struct = parse_pgp_mime(email_bytes, gpgme_ctx)
 
