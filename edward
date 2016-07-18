@@ -286,7 +286,7 @@ def main ():
     get_key_from_fp(replyinfo_obj, gpgme_ctx)
     reply_plaintext = write_reply(replyinfo_obj)
 
-    reply_mime = generate_encrypted_mime(reply_plaintext, email_reply_to, \
+    reply_mime = generate_encrypted_mime(reply_plaintext, email_reply_to, reply_from, \
                                          email_subject, replyinfo_obj.encrypt_to_key,
                                          gpgme_ctx)
 
@@ -1306,8 +1306,8 @@ def import_lang_pick_address(email_to, hostname):
     return lang_module, reply_from
 
 
-def generate_encrypted_mime (plaintext, email_to, email_subject, encrypt_to_key,
-                    gpgme_ctx):
+def generate_encrypted_mime (plaintext, email_to, email_from, email_subject,
+                    encrypt_to_key, gpgme_ctx):
     """This function creates the mime email reply. It can encrypt the email.
 
     If the encrypt_key is included, then the email is encrypted and signed.
@@ -1356,6 +1356,7 @@ def generate_encrypted_mime (plaintext, email_to, email_subject, encrypt_to_key,
         message_mime = plaintext_mime
 
     message_mime['To'] = email_to
+    message_mime['From'] = email_from
     message_mime['Subject'] = email_subject
 
     reply = message_mime.as_string()
