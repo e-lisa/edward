@@ -1355,6 +1355,8 @@ def generate_encrypted_mime (plaintext, email_to, email_from, email_subject,
     else:
         message_mime = plaintext_mime
 
+    message_mime['Auto-Submitted'] = 'auto-replied'
+
     message_mime['To'] = email_to
     message_mime['From'] = email_from
     message_mime['Subject'] = email_subject
