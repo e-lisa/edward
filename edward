@@ -51,7 +51,7 @@ from email.mime.nonmultipart    import MIMENonMultipart
 
 import edward_config
 
-langs = ["de", "el", "en", "es", "fr", "it", "ja", "pt-br", "ro", "ru", "tr"]
+langs = ["de", "el", "en", "es", "fr", "it", "ja", "pt-br", "ro", "ru", "tr", "zh"]
 
 """This list contains the abbreviated names of reply languages available to
 edward."""
