@@ -56,5 +56,5 @@ the added dot.)
 ## Contact
 
 Feel free to contact me with issues or patches for this program. My name is
-Andrew E and you may reach me at andrew.e.7327@gmail.com
+Andrew E and you may reach me at <andrew@engelbrecht.io>
 
