@@ -7,6 +7,11 @@ signed email are successful.
 At the time of writing, this program is used by the Free Software Foundation
 as part of its campaign at https://emailselfdefense.org
 
+Edward's Git repo is current hosted at:
+<https://vcs.fsf.org/?p=edward.git;a=summary>
+
+    $ git clone https://vcs.fsf.org/git/edward.git
+
 ## License
 
 This program, its translation files, and its automated test cases are licensend
