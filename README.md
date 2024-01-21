@@ -58,8 +58,3 @@ the added dot.)
     $ cp edward-src/procmailrc.example ~/.procmailrc
     $ nano .procmailrc
 
-## Contact
-
-Feel free to contact me with issues or patches for this program. My name is
-Andrew E and you may reach me at <andrew@engelbrecht.io>
-
